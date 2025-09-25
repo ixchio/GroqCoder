@@ -1,0 +1,11 @@
+services:
+  deepsite:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: deepsite
+    ports:
+      - "700:3000"   # localhost:700 → container:3000
+    env_file:
+      - .env         # load your HF_TOKEN from .env
+    restart: unless-stopped
