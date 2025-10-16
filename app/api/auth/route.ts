@@ -6,10 +6,7 @@ export async function POST(req: NextRequest) {
     const { code } = body;
 
     if (!code) {
-      return NextResponse.json(
-        { error: "Code is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Code is required" }, { status: 400 });
     }
 
     const Authorization = `Basic ${Buffer.from(
@@ -28,7 +25,6 @@ export async function POST(req: NextRequest) {
       url +
       "/auth/callback";
 
-    // Helper to handle fallback between main and internal Hugging Face API
     async function fetchToken() {
       const params = new URLSearchParams({
         grant_type: "authorization_code",
@@ -46,15 +42,18 @@ export async function POST(req: NextRequest) {
       };
 
       try {
-        // Try the main endpoint first
         const res = await fetch("https://huggingface.co/oauth/token", options);
         if (res.ok) return res;
         throw new Error(`Primary endpoint failed: ${res.status}`);
-      } catch (err) {
-        console.warn("Primary token endpoint failed:", err.message);
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error ? err.message : JSON.stringify(err);
+        console.warn("Primary token endpoint failed:", message);
         console.warn("Retrying via internal API endpoint...");
-        // Fallback to internal endpoint
-        return await fetch("https://api-inference.huggingface.co/oauth/token", options);
+        return await fetch(
+          "https://api-inference.huggingface.co/oauth/token",
+          options
+        );
       }
     }
 
@@ -68,7 +67,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Retrieve user info
     const userResponse = await fetch("https://huggingface.co/api/whoami-v2", {
       headers: { Authorization: `Bearer ${response.access_token}` },
     });
@@ -90,10 +88,11 @@ export async function POST(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (error) {
-    console.error("Auth callback error:", error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Auth callback error:", message);
     return NextResponse.json(
-      { error: "Internal Server Error", details: error.message },
+      { error: "Internal Server Error", details: message },
       { status: 500 }
     );
   }
