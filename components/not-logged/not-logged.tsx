@@ -13,8 +13,7 @@ export const NotLogged = () => {
             Oops! You must be logged to continue.
           </h2>
           <p className="text-muted-foreground text-lg mt-1">
-            Unfortunately you cannot access DeepSite without being logged
-            through your Hugging Face account.
+            Unfortunately you cannot access Groq Coder without being logged in.
           </p>
         </div>
         <Button size="lg" variant="default" onClick={openLoginWindow}>

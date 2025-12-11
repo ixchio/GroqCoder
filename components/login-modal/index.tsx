@@ -9,8 +9,8 @@ export const LoginModal = ({
   open,
   pages,
   onClose,
-  title = "Log In to use DeepSite for free",
-  description = "Log In through your Hugging Face account to continue using DeepSite and increase your monthly free limit.",
+  title = "Log In to use Groq Coder for free",
+  description = "Log In through GitHub or Email to continue using Groq Coder and save your projects.",
 }: {
   open: boolean;
   pages?: Page[];

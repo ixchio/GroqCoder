@@ -1,10 +1,10 @@
 "use client";
 import Link from "next/link";
-import { useUser } from "@/hooks/useUser";
-import { use, useState } from "react";
-import { useMount, useTimeoutFn } from "react-use";
+import { use, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+
 export default function AuthCallback({
   searchParams,
 }: {
@@ -12,18 +12,21 @@ export default function AuthCallback({
 }) {
   const [showButton, setShowButton] = useState(false);
   const { code } = use(searchParams);
-  const { loginFromCode } = useUser();
+  const router = useRouter();
 
-  useMount(async () => {
+  useEffect(() => {
+    // Redirect to home since we're using NextAuth
     if (code) {
-      await loginFromCode(code);
+      router.push("/projects");
+    } else {
+      router.push("/");
     }
-  });
+  }, [code, router]);
 
-  useTimeoutFn(
-    () => setShowButton(true),
-    7000 // Show button after 5 seconds
-  );
+  useEffect(() => {
+    const timer = setTimeout(() => setShowButton(true), 5000);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="h-screen flex flex-col justify-center items-center">
@@ -41,10 +44,10 @@ export default function AuthCallback({
             </div>
           </div>
           <p className="text-xl font-semibold text-neutral-950">
-            Login In Progress...
+            Redirecting...
           </p>
           <p className="text-sm text-neutral-500 mt-1.5">
-            Wait a moment while we log you in with your code.
+            Please wait while we redirect you.
           </p>
         </header>
         <main className="space-y-4 p-6">
@@ -55,13 +58,13 @@ export default function AuthCallback({
             </p>
             {showButton ? (
               <Link href="/">
-                <Button variant="black" className="relative">
+                <Button variant="default" className="relative">
                   Go to Home
                 </Button>
               </Link>
             ) : (
               <p className="text-xs text-neutral-500">
-                Please wait, we are logging you in...
+                Please wait...
               </p>
             )}
           </div>

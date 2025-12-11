@@ -51,7 +51,7 @@ export function InviteFriends() {
             </p>
             <div className="mt-4 space-x-3.5">
               <a
-                href="https://x.com/intent/post?url=https://enzostvs-deepsite.hf.space/&text=Checkout%20this%20awesome%20Ai%20Tool!%20Vibe%20coding%20has%20never%20been%20so%20easy✨"
+                href="https://x.com/intent/post?url=https://groqcoder.vercel.app/&text=Checkout%20this%20awesome%20AI%20Tool!%20Vibe%20coding%20has%20never%20been%20so%20easy%E2%9A%A1"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -69,7 +69,7 @@ export function InviteFriends() {
                 size="sm"
                 className="!text-neutral-700"
                 onClick={() => {
-                  copyToClipboard("https://enzostvs-deepsite.hf.space/");
+                  copyToClipboard(window.location.origin);
                   toast.success("Invite link copied to clipboard!");
                 }}
               >

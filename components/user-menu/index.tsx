@@ -1,8 +1,9 @@
+"use client";
+
 import {
-  ChartSpline,
   CirclePlus,
   FolderCode,
-  Import,
+  Settings,
   LogOut,
 } from "lucide-react";
 import Link from "next/link";
@@ -22,20 +23,23 @@ import { useUser } from "@/hooks/useUser";
 
 export const UserMenu = ({ className }: { className?: string }) => {
   const { logout, user } = useUser();
+  
+  if (!user) return null;
+  
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className={`${className}`}>
           <Avatar className="size-8 mr-1">
-            <AvatarImage src={user?.avatarUrl} alt="@shadcn" />
+            <AvatarImage src={user.image || ""} alt={user.name || ""} />
             <AvatarFallback className="text-sm">
-              {user?.fullname?.charAt(0).toUpperCase() ?? "E"}
+              {user.name?.charAt(0).toUpperCase() ?? "U"}
             </AvatarFallback>
           </Avatar>
-          <span className="max-lg:hidden">{user?.fullname}</span>
+          <span className="max-lg:hidden">{user.name}</span>
           <span className="lg:hidden">
-            {user?.fullname.slice(0, 10)}
-            {(user?.fullname?.length ?? 0) > 10 ? "..." : ""}
+            {user.name?.slice(0, 10)}
+            {(user.name?.length ?? 0) > 10 ? "..." : ""}
           </span>
         </Button>
       </DropdownMenuTrigger>
@@ -53,22 +57,16 @@ export const UserMenu = ({ className }: { className?: string }) => {
           </Link>
           <Link href="/projects">
             <DropdownMenuItem>
-              <Import className="size-4 text-neutral-100" />
-              Import Project
-            </DropdownMenuItem>
-          </Link>
-          <Link href="/projects">
-            <DropdownMenuItem>
               <FolderCode className="size-4 text-neutral-100" />
-              View Projects
+              My Projects
             </DropdownMenuItem>
           </Link>
-          <a href="https://huggingface.co/settings/billing" target="_blank">
+          <Link href="/settings">
             <DropdownMenuItem>
-              <ChartSpline className="size-4 text-neutral-100" />
-              Usage Quota
+              <Settings className="size-4 text-neutral-100" />
+              Settings
             </DropdownMenuItem>
-          </a>
+          </Link>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem

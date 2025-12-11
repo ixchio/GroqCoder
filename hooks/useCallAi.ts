@@ -3,6 +3,14 @@ import { toast } from "sonner";
 import { MODELS } from "@/lib/providers";
 import { Page } from "@/types";
 
+// Stream statistics for real-time progress tracking
+export interface StreamStats {
+  chars: number;
+  tokens: number;
+  elapsed: number;
+  isStreaming: boolean;
+}
+
 interface UseCallAiProps {
   onNewPrompt: (prompt: string) => void;
   onSuccess: (page: Page[], p: string, n?: number[][]) => void;
@@ -13,6 +21,7 @@ interface UseCallAiProps {
   pages: Page[];
   isAiWorking: boolean;
   setisAiWorking: React.Dispatch<React.SetStateAction<boolean>>;
+  onStreamProgress?: (stats: StreamStats) => void;
 }
 
 export const useCallAi = ({
@@ -24,11 +33,12 @@ export const useCallAi = ({
   pages,
   isAiWorking,
   setisAiWorking,
+  onStreamProgress,
 }: UseCallAiProps) => {
   const audio = useRef<HTMLAudioElement | null>(null);
   const [controller, setController] = useState<AbortController | null>(null);
 
-  const callAiNewProject = async (prompt: string, model: string | undefined, provider: string | undefined, redesignMarkdown?: string, handleThink?: (think: string) => void, onFinishThink?: () => void) => {
+  const callAiNewProject = async (prompt: string, model: string | undefined, provider: string | undefined, redesignMarkdown?: string, handleThink?: (think: string) => void, onFinishThink?: () => void, projectType: string = "html") => {
     if (isAiWorking) return;
     if (!redesignMarkdown && !prompt.trim()) return;
     
@@ -47,6 +57,7 @@ export const useCallAi = ({
           provider,
           model,
           redesignMarkdown,
+          projectType,
         }),
         headers: {
           "Content-Type": "application/json",
@@ -62,10 +73,27 @@ export const useCallAi = ({
           (m: { value: string }) => m.value === model
         );
         let contentResponse = "";
+        const startTime = Date.now();
+
+        // Report initial streaming state
+        onStreamProgress?.({
+          chars: 0,
+          tokens: 0,
+          elapsed: 0,
+          isStreaming: true,
+        });
 
         const read = async () => {
           const { done, value } = await reader.read();
           if (done) {
+            // Report final stats
+            onStreamProgress?.({
+              chars: contentResponse.length,
+              tokens: Math.round(contentResponse.length / 4),
+              elapsed: Math.round((Date.now() - startTime) / 1000),
+              isStreaming: false,
+            });
+
             const isJson =
               contentResponse.trim().startsWith("{") &&
               contentResponse.trim().endsWith("}");
@@ -73,13 +101,10 @@ export const useCallAi = ({
             
             if (jsonResponse && !jsonResponse.ok) {
               if (jsonResponse.openLogin) {
-                // Handle login required
                 return { error: "login_required" };
               } else if (jsonResponse.openSelectProvider) {
-                // Handle provider selection required
                 return { error: "provider_required", message: jsonResponse.message };
               } else if (jsonResponse.openProModal) {
-                // Handle pro modal required
                 return { error: "pro_required" };
               } else {
                 toast.error(jsonResponse.message);
@@ -95,12 +120,20 @@ export const useCallAi = ({
 
             const newPages = formatPages(contentResponse);
             onSuccess(newPages, prompt);
-
             return { success: true, pages: newPages };
+
           }
 
           const chunk = decoder.decode(value, { stream: true });
           contentResponse += chunk;
+
+          // Report progress during streaming
+          onStreamProgress?.({
+            chars: contentResponse.length,
+            tokens: Math.round(contentResponse.length / 4),
+            elapsed: Math.round((Date.now() - startTime) / 1000),
+            isStreaming: true,
+          });
           
           if (selectedModel?.isThinker) {
             const thinkMatch = contentResponse.match(/<think>[\s\S]*/)?.[0];
@@ -131,7 +164,7 @@ export const useCallAi = ({
     }
   };
 
-  const callAiNewPage = async (prompt: string, model: string | undefined, provider: string | undefined, currentPagePath: string, previousPrompts?: string[]) => {
+  const callAiNewPage = async (prompt: string, model: string | undefined, provider: string | undefined, currentPagePath: string, previousPrompts?: string[], projectType: string = "html") => {
     if (isAiWorking) return;
     if (!prompt.trim()) return;
     
@@ -151,6 +184,7 @@ export const useCallAi = ({
           model,
           pages,
           previousPrompts,
+          projectType,
         }),
         headers: {
           "Content-Type": "application/json",
@@ -166,10 +200,27 @@ export const useCallAi = ({
           (m: { value: string }) => m.value === model
         );
         let contentResponse = "";
+        const startTime = Date.now();
+
+        // Report initial streaming state
+        onStreamProgress?.({
+          chars: 0,
+          tokens: 0,
+          elapsed: 0,
+          isStreaming: true,
+        });
 
         const read = async () => {
           const { done, value } = await reader.read();
           if (done) {
+            // Report final stats
+            onStreamProgress?.({
+              chars: contentResponse.length,
+              tokens: Math.round(contentResponse.length / 4),
+              elapsed: Math.round((Date.now() - startTime) / 1000),
+              isStreaming: false,
+            });
+
             const isJson =
               contentResponse.trim().startsWith("{") &&
               contentResponse.trim().endsWith("}");
@@ -195,11 +246,6 @@ export const useCallAi = ({
             toast.success("AI responded successfully");
             setisAiWorking(false);
             
-            if (selectedModel?.isThinker) {
-              // Reset to default model if using thinker model
-              // Note: You might want to add a callback for this
-            }
-            
             if (audio.current) audio.current.play();
 
             const newPage = formatPage(contentResponse, currentPagePath);
@@ -211,11 +257,18 @@ export const useCallAi = ({
 
           const chunk = decoder.decode(value, { stream: true });
           contentResponse += chunk;
+
+          // Report progress during streaming
+          onStreamProgress?.({
+            chars: contentResponse.length,
+            tokens: Math.round(contentResponse.length / 4),
+            elapsed: Math.round((Date.now() - startTime) / 1000),
+            isStreaming: true,
+          });
           
           if (selectedModel?.isThinker) {
             const thinkMatch = contentResponse.match(/<think>[\s\S]*/)?.[0];
             if (thinkMatch && !contentResponse?.includes("</think>")) {
-              // contentThink += chunk;
               return read();
             }
           }
@@ -237,7 +290,7 @@ export const useCallAi = ({
     }
   };
 
-  const callAiFollowUp = async (prompt: string, model: string | undefined, provider: string | undefined, previousPrompts: string[], selectedElementHtml?: string, files?: string[]) => {
+  const callAiFollowUp = async (prompt: string, model: string | undefined, provider: string | undefined, previousPrompts: string[], selectedElementHtml?: string, files?: string[], projectType: string = "html") => {
     if (isAiWorking) return;
     if (!prompt.trim()) return;
     
@@ -259,6 +312,7 @@ export const useCallAi = ({
           pages,
           selectedElementHtml,
           files,
+          projectType,
         }),
         headers: {
           "Content-Type": "application/json",

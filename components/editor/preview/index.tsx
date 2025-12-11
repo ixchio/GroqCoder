@@ -10,6 +10,14 @@ import { GridPattern } from "@/components/magic-ui/grid-pattern";
 import { htmlTagToText } from "@/lib/html-tag-to-text";
 import { Page } from "@/types";
 
+// Error type for preview errors
+export interface PreviewErrorInfo {
+  message: string;
+  type: "js" | "css" | "html" | "network";
+  line?: number;
+  column?: number;
+}
+
 export const Preview = ({
   html,
   isResizing,
@@ -22,6 +30,7 @@ export const Preview = ({
   setCurrentPage,
   isEditableModeEnabled,
   onClickElement,
+  onError,
 }: {
   html: string;
   isResizing: boolean;
@@ -34,6 +43,7 @@ export const Preview = ({
   currentTab: string;
   isEditableModeEnabled?: boolean;
   onClickElement?: (element: HTMLElement) => void;
+  onError?: (error: PreviewErrorInfo) => void;
 }) => {
   const [hoveredElement, setHoveredElement] = useState<HTMLElement | null>(
     null
@@ -95,9 +105,17 @@ export const Preview = ({
             event.preventDefault();
 
             if (href.includes("#") && !href.includes(".html")) {
-              const targetElement = iframeDocument.querySelector(href);
-              if (targetElement) {
-                targetElement.scrollIntoView({ behavior: "smooth" });
+              // Skip if href is just "#" or empty hash
+              if (href === "#" || href.trim() === "") {
+                return;
+              }
+              try {
+                const targetElement = iframeDocument.querySelector(href);
+                if (targetElement) {
+                  targetElement.scrollIntoView({ behavior: "smooth" });
+                }
+              } catch {
+                // Invalid selector, ignore
               }
               return;
             }
@@ -174,6 +192,7 @@ export const Preview = ({
           "[mask-image:radial-gradient(900px_circle_at_center,white,transparent)]"
         )}
       />
+      
       {!isAiWorking && hoveredElement && selectedElement && (
         <div
           className="cursor-pointer absolute bg-sky-500/10 border-[2px] border-dashed border-sky-500 rounded-r-lg rounded-b-lg p-3 z-10 pointer-events-none"
@@ -223,6 +242,44 @@ export const Preview = ({
             links.forEach((link) => {
               link.addEventListener("click", handleCustomNavigation);
             });
+          }
+          
+          // Set up error detection in iframe
+          if (iframeRef?.current?.contentWindow && onError) {
+            const iframeWindow = iframeRef.current.contentWindow;
+            
+            // Capture JavaScript errors
+            iframeWindow.onerror = (message, _source, lineno, colno) => {
+              onError({
+                message: String(message),
+                type: "js",
+                line: lineno,
+                column: colno,
+              });
+              return true; // Prevent default error handling
+            };
+            
+            // Capture unhandled promise rejections
+            iframeWindow.onunhandledrejection = (event) => {
+              onError({
+                message: `Unhandled Promise: ${event.reason}`,
+                type: "js",
+              });
+            };
+            
+            // Override console.error to capture errors
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const win = iframeWindow as any;
+            if (win.console && win.console.error) {
+              const originalConsoleError = win.console.error;
+              win.console.error = (...args: unknown[]) => {
+                onError({
+                  message: args.map(arg => String(arg)).join(" "),
+                  type: "js",
+                });
+                originalConsoleError.apply(win.console, args);
+              };
+            }
           }
         }}
       />

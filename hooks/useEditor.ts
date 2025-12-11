@@ -27,7 +27,6 @@ export const useEditor = (initialPages?: Page[], initialPrompts?: string[], init
     initialPrompts ?? []
   );
 
-
   return {
     htmlHistory,
     setHtmlHistory,

@@ -7,7 +7,7 @@ import { useMount, useUnmount } from "react-use";
 import classNames from "classnames";
 
 import { Button } from "@/components/ui/button";
-import Logo from "@/assets/logo.svg";
+
 import { useUser } from "@/hooks/useUser";
 import { UserMenu } from "@/components/user-menu";
 
@@ -31,7 +31,7 @@ const navigationLinks = [
 ];
 
 export default function Navigation() {
-  const { openLoginWindow, user } = useUser();
+  const { user } = useUser();
   const [hash, setHash] = useState("");
 
   const selectorRef = useRef<HTMLDivElement>(null);
@@ -86,15 +86,15 @@ export default function Navigation() {
       )}
     >
       <nav className="grid grid-cols-2 p-4 container mx-auto">
-        <Link href="/" className="flex items-center gap-1">
+        <Link href="/" className="flex items-center gap-2">
           <Image
-            src={Logo}
-            className="w-9 mr-1"
-            alt="DeepSite Logo"
-            width={64}
-            height={64}
+            src="/groq-coder-icon.jpg"
+            className="w-9 h-9 rounded-full"
+            alt="Groq Coder Logo"
+            width={36}
+            height={36}
           />
-          <p className="font-sans text-white text-xl font-bold">DeepSite</p>
+          <p className="font-sans text-white text-xl font-bold">Groq Coder</p>
         </Link>
         <ul className="items-center justify-center gap-6 hidden">
           {navigationLinks.map((link) => (
@@ -143,10 +143,14 @@ export default function Navigation() {
             <UserMenu className="!pl-3 !pr-4 !py-2 !h-auto !rounded-lg" />
           ) : (
             <>
-              <Button variant="link" size={"sm"} onClick={openLoginWindow}>
-                Log In
-              </Button>
-              <Button size={"sm"}>Sign Up</Button>
+              <Link href="/auth/signin">
+                <Button variant="link" size={"sm"}>
+                  Log In
+                </Button>
+              </Link>
+              <Link href="/auth/register">
+                <Button size={"sm"}>Sign Up</Button>
+              </Link>
             </>
           )}
         </div>

@@ -1,16 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Metadata, Viewport } from "next";
 import { Inter, PT_Sans } from "next/font/google";
-import { cookies } from "next/headers";
+import { getServerSession } from "next-auth";
 
 import TanstackProvider from "@/components/providers/tanstack-query-provider";
+import { NextAuthProvider } from "@/components/providers/session-provider";
 import "@/assets/globals.css";
 import { Toaster } from "@/components/ui/sonner";
-import MY_TOKEN_KEY from "@/lib/get-cookie-name";
-import { apiServer } from "@/lib/api";
 import AppContext from "@/components/contexts/app-context";
-import Script from "next/script";
 import IframeDetector from "@/components/iframe-detector";
+import { authOptions } from "@/lib/auth";
 
 const inter = Inter({
   variable: "--font-inter-sans",
@@ -24,41 +23,52 @@ const ptSans = PT_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "DeepSite | Build with AI ✨",
+  title: "Groq Coder | Free AI Code Generation ⚡",
   description:
-    "DeepSite is a web development tool that helps you build websites with AI, no code required. Let's deploy your website with DeepSite and enjoy the magic of AI.",
+    "Groq Coder is a free, open-source AI code generation platform. Build websites with Llama, Mixtral, Gemma, and more. Powered by Groq, Cerebras, and Together AI.",
+  manifest: "/manifest.json",
   openGraph: {
-    title: "DeepSite | Build with AI ✨",
+    title: "Groq Coder | Free AI Code Generation ⚡",
     description:
-      "DeepSite is a web development tool that helps you build websites with AI, no code required. Let's deploy your website with DeepSite and enjoy the magic of AI.",
-    url: "https://deepsite.hf.co",
-    siteName: "DeepSite",
+      "Free, open-source AI code generation platform. Build websites with Llama, Mixtral, Gemma, and more. Powered by Groq.",
+    url: "https://groq-coder.vercel.app",
+    siteName: "Groq Coder",
     images: [
       {
-        url: "https://deepsite.hf.co/banner.png",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "DeepSite Open Graph Image",
+        alt: "Groq Coder - Free AI Code Generation",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "DeepSite | Build with AI ✨",
+    title: "Groq Coder | Free AI Code Generation ⚡",
     description:
-      "DeepSite is a web development tool that helps you build websites with AI, no code required. Let's deploy your website with DeepSite and enjoy the magic of AI.",
-    images: ["https://deepsite.hf.co/banner.png"],
+      "Free, open-source AI code generation platform. Build websites with Llama, Mixtral, Gemma, and more.",
+    images: ["/og-image.png"],
   },
   appleWebApp: {
     capable: true,
-    title: "DeepSite",
+    title: "Groq Coder",
     statusBarStyle: "black-translucent",
   },
   icons: {
-    icon: "/logo.svg",
-    shortcut: "/logo.svg",
-    apple: "/logo.svg",
+    icon: "/groq-coder-icon.jpg",
+    shortcut: "/groq-coder-icon.jpg",
+    apple: "/groq-coder-icon.jpg",
   },
+  keywords: [
+    "AI code generation",
+    "Groq",
+    "Llama",
+    "Mixtral",
+    "free AI",
+    "open source",
+    "web development",
+    "code generator",
+  ],
 };
 
 export const viewport: Viewport = {
@@ -68,22 +78,26 @@ export const viewport: Viewport = {
 };
 
 async function getMe() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(MY_TOKEN_KEY())?.value;
-  if (!token) return { user: null, errCode: null };
   try {
-    const res = await apiServer.get("/me", {
-      headers: {
-        Authorization: `Bearer ${token}`,
+    const session = await getServerSession(authOptions);
+    if (!session?.user) return { user: null, errCode: null };
+    
+    return {
+      user: {
+        id: session.user.id,
+        email: session.user.email,
+        name: session.user.name,
+        image: session.user.image,
+        bio: session.user.bio,
+        linkedinUrl: session.user.linkedinUrl,
+        githubUsername: session.user.githubUsername,
       },
-    });
-    return { user: res.data.user, errCode: null };
+      errCode: null,
+    };
   } catch (err: any) {
-    return { user: null, errCode: err.status };
+    return { user: null, errCode: err.status || 500 };
   }
 }
-
-// if domain isn't deepsite.hf.co or enzostvs-deepsite.hf.space redirect to deepsite.hf.co
 
 export default async function RootLayout({
   children,
@@ -93,19 +107,16 @@ export default async function RootLayout({
   const data = await getMe();
   return (
     <html lang="en">
-      <Script
-        defer
-        data-domain="deepsite.hf.co"
-        src="https://plausible.io/js/script.js"
-      ></Script>
       <body
-        className={`${inter.variable} ${ptSans.variable} antialiased bg-black dark h-[100dvh] overflow-hidden`}
+        className={`${inter.variable} ${ptSans.variable} antialiased bg-black dark`}
       >
         <IframeDetector />
         <Toaster richColors position="bottom-center" />
-        <TanstackProvider>
-          <AppContext me={data}>{children}</AppContext>
-        </TanstackProvider>
+        <NextAuthProvider>
+          <TanstackProvider>
+            <AppContext me={data}>{children}</AppContext>
+          </TanstackProvider>
+        </NextAuthProvider>
       </body>
     </html>
   );

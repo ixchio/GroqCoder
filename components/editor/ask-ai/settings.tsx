@@ -47,7 +47,8 @@ export function Settings({
     )?.providers;
     if (!availableProviders) return Object.keys(PROVIDERS);
     return Object.keys(PROVIDERS).filter((id) =>
-      availableProviders.includes(id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      availableProviders.includes(id as any)
     );
   }, [model]);
 

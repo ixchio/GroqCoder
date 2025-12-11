@@ -1,63 +1,117 @@
 "use server";
 
-import { isAuthenticated } from "@/lib/auth";
-import { NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { connectToDatabase } from "@/lib/mongodb";
 import Project from "@/models/Project";
+import User from "@/models/User";
 import { Project as ProjectType } from "@/types";
 
 export async function getProjects(): Promise<{
   ok: boolean;
   projects: ProjectType[];
 }> {
-  const user = await isAuthenticated();
+  const session = await getServerSession(authOptions);
 
-  if (user instanceof NextResponse || !user) {
+  if (!session?.user?.email) {
     return {
       ok: false,
       projects: [],
     };
   }
 
-  await dbConnect();
+  await connectToDatabase();
+  
+  const user = await User.findOne({ email: session.user.email });
+  if (!user) {
+    return {
+      ok: false,
+      projects: [],
+    };
+  }
+
   const projects = await Project.find({
-    user_id: user?.id,
+    userId: user._id,
   })
-    .sort({ _createdAt: -1 })
+    .sort({ updatedAt: -1 })
     .limit(100)
+    .select("-pages") // Don't include full HTML in list
     .lean();
+
   if (!projects) {
     return {
       ok: false,
       projects: [],
     };
   }
+
   return {
     ok: true,
-    projects: JSON.parse(JSON.stringify(projects)) as ProjectType[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    projects: projects.map((p: any) => ({
+      id: p._id.toString(),
+      title: p.title,
+      description: p.description,
+      userId: p.userId.toString(),
+      authorName: p.authorName,
+      authorImage: p.authorImage,
+      pages: [],
+      prompts: p.prompts,
+      thumbnail: p.thumbnail,
+      isPublic: p.isPublic,
+      likes: p.likes,
+      forks: p.forks,
+      tags: p.tags,
+      model: p.model,
+      provider: p.provider,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+    })) as ProjectType[],
   };
 }
 
-export async function getProject(
-  namespace: string,
-  repoId: string
-): Promise<ProjectType | null> {
-  const user = await isAuthenticated();
+export async function getProject(id: string): Promise<ProjectType | null> {
+  const session = await getServerSession(authOptions);
 
-  if (user instanceof NextResponse || !user) {
+  if (!session?.user?.email) {
     return null;
   }
 
-  await dbConnect();
+  await connectToDatabase();
+  
+  const user = await User.findOne({ email: session.user.email });
+  if (!user) {
+    return null;
+  }
+
   const project = await Project.findOne({
-    user_id: user.id,
-    namespace,
-    repoId,
+    _id: id,
+    userId: user._id,
   }).lean();
 
   if (!project) {
     return null;
   }
 
-  return JSON.parse(JSON.stringify(project)) as ProjectType;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const p = project as any;
+  return {
+    id: p._id.toString(),
+    title: p.title,
+    description: p.description,
+    userId: p.userId.toString(),
+    authorName: p.authorName,
+    authorImage: p.authorImage,
+    pages: p.pages,
+    prompts: p.prompts,
+    thumbnail: p.thumbnail,
+    isPublic: p.isPublic,
+    likes: p.likes,
+    forks: p.forks,
+    tags: p.tags,
+    model: p.model,
+    provider: p.provider,
+    createdAt: p.createdAt,
+    updatedAt: p.updatedAt,
+  } as ProjectType;
 }
