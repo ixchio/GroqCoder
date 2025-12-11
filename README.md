@@ -49,7 +49,7 @@ graph TD
     subgraph "Inference Engine"
         Meta -->|JSON Schema| Groq[Groq LPU Cloud]
         Meta -->|Fallback strategy| Cerebras[Cerebras Wafer-Scale Engine]
-        Groq -->|Token Stream (800 T/s)| StreamHandler[Stream Transformer]
+        Groq -->|Token Stream 800 Ts| StreamHandler[Stream Transformer]
     end
     
     subgraph "Persistence & State"
