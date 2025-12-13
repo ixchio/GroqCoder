@@ -3,10 +3,10 @@
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Terminal, Cpu, Database, Globe, Network, Bot, Sparkles, Activity, Search, Server } from "lucide-react";
+import { ArrowRight, Bot, Sparkles, Network, Database, Server, Terminal } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { Cursor } from "@/components/ui/cursor";
-import { motion, useScroll, useTransform, useSpring, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 export default function Home() {
   const { data: session } = useSession();
