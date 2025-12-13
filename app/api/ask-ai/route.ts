@@ -42,6 +42,103 @@ import { Page, ProjectType, CodeFile } from "@/types";
 // Rate limiting for anonymous users
 const ipAddresses = new Map<string, number>();
 
+// Helper: Calculate similarity between two strings (0-1)
+function stringSimilarity(s1: string, s2: string): number {
+  const longer = s1.length > s2.length ? s1 : s2;
+  
+  if (longer.length === 0) return 1.0;
+  
+  // Quick check for identical strings
+  if (s1 === s2) return 1.0;
+  
+  // Levenshtein distance calculation
+  const costs: number[] = [];
+  for (let i = 0; i <= s1.length; i++) {
+    let lastValue = i;
+    for (let j = 0; j <= s2.length; j++) {
+      if (i === 0) {
+        costs[j] = j;
+      } else if (j > 0) {
+        let newValue = costs[j - 1];
+        if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
+          newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+        }
+        costs[j - 1] = lastValue;
+        lastValue = newValue;
+      }
+    }
+    if (i > 0) costs[s2.length] = lastValue;
+  }
+  
+  return (longer.length - costs[s2.length]) / longer.length;
+}
+
+// Helper: Normalize whitespace for comparison
+function normalizeWhitespace(str: string): string {
+  return str
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0)
+    .join('\n');
+}
+
+// Helper: Find best fuzzy match in the page HTML
+function findBestFuzzyMatch(
+  pageHtml: string,
+  searchBlock: string,
+  minSimilarity: number = 0.7
+): { start: number; end: number; matchedText: string } | null {
+  const normalizedSearch = normalizeWhitespace(searchBlock);
+  const searchLines = normalizedSearch.split('\n');
+  const pageLines = pageHtml.split('\n');
+  
+  let bestMatch: { start: number; end: number; matchedText: string; similarity: number } | null = null;
+  
+  // Slide through the page looking for similar blocks
+  for (let i = 0; i <= pageLines.length - searchLines.length; i++) {
+    const windowLines = pageLines.slice(i, i + searchLines.length + 2); // +2 for flexibility
+    const windowText = windowLines.join('\n');
+    const normalizedWindow = normalizeWhitespace(windowText);
+    
+    const similarity = stringSimilarity(normalizedSearch, normalizedWindow);
+    
+    if (similarity >= minSimilarity && (!bestMatch || similarity > bestMatch.similarity)) {
+      // Calculate actual character positions
+      const startPos = pageLines.slice(0, i).join('\n').length + (i > 0 ? 1 : 0);
+      const matchedText = pageLines.slice(i, i + searchLines.length).join('\n');
+      
+      bestMatch = {
+        start: startPos,
+        end: startPos + matchedText.length,
+        matchedText,
+        similarity
+      };
+    }
+  }
+  
+  return bestMatch ? { start: bestMatch.start, end: bestMatch.end, matchedText: bestMatch.matchedText } : null;
+}
+
+// Helper: Extract full HTML from AI response (fallback for when SEARCH/REPLACE fails)
+function extractFullHtmlFromResponse(response: string): string | null {
+  // Try to find complete HTML document
+  const htmlDocMatch = response.match(/<!DOCTYPE html>[\s\S]*<\/html>/i) || 
+                       response.match(/<html[\s\S]*<\/html>/i);
+  if (htmlDocMatch) return htmlDocMatch[0];
+  
+  // Try to find HTML in code blocks
+  const codeBlockMatch = response.match(/```html\s*([\s\S]*?)\s*```/);
+  if (codeBlockMatch && codeBlockMatch[1].trim().length > 100) {
+    return codeBlockMatch[1].trim();
+  }
+  
+  // Try to find body content
+  const bodyMatch = response.match(/<body[\s\S]*<\/body>/i);
+  if (bodyMatch) return bodyMatch[0];
+  
+  return null;
+}
+
 // Helper to decrypt API keys
 function decryptKey(encrypted: string): string {
   const secret = process.env.API_KEYS_SECRET || process.env.NEXTAUTH_SECRET || "default-secret";
@@ -719,9 +816,26 @@ export async function PUT(request: NextRequest) {
               console.log("Successfully replaced content at line:", startLineNumber);
               changesApplied++;
             } else {
-              console.warn("Could not find search block in page HTML.");
-              console.warn("Search block preview:", cleanSearchBlock.substring(0, 300));
-              changesFailed++;
+              // Strategy 5: Fuzzy matching using string similarity
+              console.log("Trying fuzzy matching strategy...");
+              const fuzzyMatch = findBestFuzzyMatch(pageHtml, cleanSearchBlock, 0.6);
+              
+              if (fuzzyMatch) {
+                console.log("Found fuzzy match with similarity threshold 0.6");
+                const beforeText = pageHtml.substring(0, fuzzyMatch.start);
+                const startLineNumber = beforeText.split("\n").length;
+                const replaceLines = cleanReplaceBlock.split("\n").length;
+                const endLineNumber = startLineNumber + replaceLines - 1;
+
+                updatedLines.push([startLineNumber, endLineNumber]);
+                pageHtml = pageHtml.substring(0, fuzzyMatch.start) + cleanReplaceBlock + pageHtml.substring(fuzzyMatch.end);
+                console.log("Successfully replaced content using fuzzy match at line:", startLineNumber);
+                changesApplied++;
+              } else {
+                console.warn("Could not find search block in page HTML.");
+                console.warn("Search block preview:", cleanSearchBlock.substring(0, 300));
+                changesFailed++;
+              }
             }
           }
 
@@ -730,10 +844,21 @@ export async function PUT(request: NextRequest) {
 
         console.log(`Changes applied: ${changesApplied}, Changes failed: ${changesFailed}`);
         
-        // If all changes failed, we MUST notify the user
+        // If all changes failed, try fallback: extract full HTML from response
         if (changesApplied === 0 && changesFailed > 0) {
-          console.warn("All SEARCH/REPLACE blocks failed to match.");
-          throw new Error("Unable to apply changes: The AI generated code that didn't match the existing file. Please try again with a clearer request or use the 'rewrite' option if available.");
+          console.warn("All SEARCH/REPLACE blocks failed. Attempting fallback extraction...");
+          
+          const extractedHtml = extractFullHtmlFromResponse(chunk);
+          if (extractedHtml && extractedHtml.length > 200) {
+            console.log("Fallback: Found complete HTML in response, using as full replacement");
+            pageHtml = extractedHtml;
+            updatedLines.push([1, extractedHtml.split('\n').length]);
+            changesApplied = 1;
+            changesFailed = 0;
+          } else {
+            console.warn("Fallback extraction also failed.");
+            throw new Error("Unable to apply changes: The AI generated code that didn't match the existing file. Please try rephrasing your request to be more specific, or start a new project for major redesigns.");
+          }
         }
 
         updatedPages[pageIndex].html = pageHtml;
