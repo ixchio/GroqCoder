@@ -281,6 +281,137 @@ export default function Home() {
         </div>
       </section>
 
+      {/* AI Mascots Section */}
+      <section className="py-20 px-6 relative overflow-hidden z-10">
+        <div className="max-w-6xl mx-auto">
+          <motion.div 
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
+              Meet Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">AI Squad</span>
+            </h2>
+            <p className="text-white/50">Powered by next-gen intelligence, styled with anime magic ✨</p>
+          </motion.div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {/* Rukia - Ice Queen */}
+            <motion.div 
+              className="relative group"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0 }}
+            >
+              <motion.div
+                animate={{ y: [0, -10, 0] }}
+                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+                className="relative"
+              >
+                <div className="absolute -inset-2 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="relative w-32 h-32 mx-auto rounded-full overflow-hidden border-2 border-cyan-400/50 group-hover:border-cyan-400 transition-colors shadow-lg shadow-cyan-500/20">
+                  <Image src="/anime-rukia.png" alt="Rukia AI" fill className="object-cover scale-110 group-hover:scale-125 transition-transform duration-500" />
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-cyan-500 rounded-full flex items-center justify-center border-2 border-[#030303]">
+                  <span className="text-xs">❄️</span>
+                </div>
+              </motion.div>
+              <div className="text-center mt-4">
+                <h3 className="font-bold text-white group-hover:text-cyan-400 transition-colors">Rukia</h3>
+                <p className="text-xs text-white/40">Code Freezer</p>
+                <p className="text-[10px] text-cyan-400/60 font-mono mt-1">Debugger Agent</p>
+              </div>
+            </motion.div>
+
+            {/* Nemu - Dark Scientist */}
+            <motion.div 
+              className="relative group"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+            >
+              <motion.div
+                animate={{ y: [0, -12, 0] }}
+                transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut", delay: 0.5 }}
+                className="relative"
+              >
+                <div className="absolute -inset-2 bg-gradient-to-r from-purple-500/30 to-pink-500/30 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="relative w-32 h-32 mx-auto rounded-full overflow-hidden border-2 border-purple-400/50 group-hover:border-purple-400 transition-colors shadow-lg shadow-purple-500/20">
+                  <Image src="/anime-nemu.png" alt="Nemu AI" fill className="object-cover scale-110 group-hover:scale-125 transition-transform duration-500" />
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center border-2 border-[#030303]">
+                  <span className="text-xs">🔬</span>
+                </div>
+              </motion.div>
+              <div className="text-center mt-4">
+                <h3 className="font-bold text-white group-hover:text-purple-400 transition-colors">Nemu</h3>
+                <p className="text-xs text-white/40">Lab Architect</p>
+                <p className="text-[10px] text-purple-400/60 font-mono mt-1">Research Agent</p>
+              </div>
+            </motion.div>
+
+            {/* Orihime - Healer */}
+            <motion.div 
+              className="relative group"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+            >
+              <motion.div
+                animate={{ y: [0, -8, 0] }}
+                transition={{ repeat: Infinity, duration: 2.8, ease: "easeInOut", delay: 1 }}
+                className="relative"
+              >
+                <div className="absolute -inset-2 bg-gradient-to-r from-orange-500/30 to-yellow-500/30 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="relative w-32 h-32 mx-auto rounded-full overflow-hidden border-2 border-orange-400/50 group-hover:border-orange-400 transition-colors shadow-lg shadow-orange-500/20">
+                  <Image src="/anime-orihime.png" alt="Orihime AI" fill className="object-cover scale-110 group-hover:scale-125 transition-transform duration-500" />
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center border-2 border-[#030303]">
+                  <span className="text-xs">✨</span>
+                </div>
+              </motion.div>
+              <div className="text-center mt-4">
+                <h3 className="font-bold text-white group-hover:text-orange-400 transition-colors">Orihime</h3>
+                <p className="text-xs text-white/40">Bug Healer</p>
+                <p className="text-[10px] text-orange-400/60 font-mono mt-1">Refactor Agent</p>
+              </div>
+            </motion.div>
+
+            {/* Makima - Control */}
+            <motion.div 
+              className="relative group"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+            >
+              <motion.div
+                animate={{ y: [0, -10, 0] }}
+                transition={{ repeat: Infinity, duration: 4, ease: "easeInOut", delay: 1.5 }}
+                className="relative"
+              >
+                <div className="absolute -inset-2 bg-gradient-to-r from-red-500/30 to-rose-500/30 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="relative w-32 h-32 mx-auto rounded-full overflow-hidden border-2 border-red-400/50 group-hover:border-red-400 transition-colors shadow-lg shadow-red-500/20">
+                  <Image src="/anime-makima.png" alt="Makima AI" fill className="object-cover scale-110 group-hover:scale-125 transition-transform duration-500" />
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center border-2 border-[#030303]">
+                  <span className="text-xs">🎯</span>
+                </div>
+              </motion.div>
+              <div className="text-center mt-4">
+                <h3 className="font-bold text-white group-hover:text-red-400 transition-colors">Makima</h3>
+                <p className="text-xs text-white/40">Flow Controller</p>
+                <p className="text-[10px] text-red-400/60 font-mono mt-1">Orchestrator</p>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* Models Ticker (Infinite Scroll) */}
       <section className="py-10 border-y border-white/5 bg-white/[0.02] overflow-hidden">
          <div className="max-w-7xl mx-auto px-6">
