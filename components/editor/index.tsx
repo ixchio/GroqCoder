@@ -1,9 +1,22 @@
 "use client";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { editor } from "monaco-editor";
-import Editor from "@monaco-editor/react";
-import { CopyIcon } from "lucide-react";
+import dynamic from "next/dynamic";
+import { CopyIcon, Loader2 } from "lucide-react";
+
+// Lazy load Monaco Editor for better initial page load
+const Editor = dynamic(() => import("@monaco-editor/react"), {
+  loading: () => (
+    <div className="h-full w-full flex items-center justify-center bg-neutral-900">
+      <div className="flex flex-col items-center gap-2 text-neutral-500">
+        <Loader2 className="size-6 animate-spin" />
+        <span className="text-sm">Loading editor...</span>
+      </div>
+    </div>
+  ),
+  ssr: false,
+});
 import {
   useCopyToClipboard,
   useEvent,
@@ -18,10 +31,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/editor/header";
 import { Footer } from "@/components/editor/footer";
 import { defaultHTML } from "@/lib/consts";
-import { Preview } from "@/components/editor/preview";
+import { Preview, PreviewErrorInfo } from "@/components/editor/preview";
+import { PreviewErrorsPanel } from "@/components/editor/preview/preview-errors";
+import { PreviewError } from "@/components/contexts/chat-context";
 import { useEditor } from "@/hooks/useEditor";
 import { AskAI } from "@/components/editor/ask-ai";
 import { DeployButton } from "./deploy-button";
+import { DownloadButton } from "./download-button";
 import { Page, Project } from "@/types";
 import { SaveButton } from "./save-button";
 import { LoadProject } from "../my-projects/load-project";
@@ -70,6 +86,51 @@ export const AppEditor = ({
     null
   );
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+  const [previewErrors, setPreviewErrors] = useState<PreviewError[]>([]);
+  const [isAutoFixing, setIsAutoFixing] = useState(false);
+
+  // Generate unique ID for errors
+  const generateErrorId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+  // Handle preview errors
+  const handlePreviewError = useCallback((error: PreviewErrorInfo) => {
+    const newError: PreviewError = {
+      id: generateErrorId(),
+      message: error.message,
+      type: error.type,
+      line: error.line,
+      column: error.column,
+      timestamp: new Date(),
+    };
+    setPreviewErrors((prev) => {
+      // Avoid duplicates
+      const exists = prev.some((e) => e.message === error.message);
+      if (exists) return prev;
+      // Keep only last 10 errors
+      return [...prev.slice(-9), newError];
+    });
+  }, []);
+
+  // Clear errors when HTML changes or AI starts working
+  useUpdateEffect(() => {
+    if (isAiWorking) {
+      setPreviewErrors([]);
+    }
+  }, [isAiWorking]);
+
+  // Handle auto-fix with AI
+  const handleAutoFix = useCallback(async (errors: PreviewError[]) => {
+    if (!errors.length) return;
+    
+    setIsAutoFixing(true);
+    toast.info(`Fixing ${errors.length} error(s) with AI...`);
+    
+    // TODO: In future, auto-generate a fix prompt and trigger AI
+    // For now, we just clear errors and show a message
+    setPreviewErrors([]);
+    setIsAutoFixing(false);
+    toast.success("Errors cleared. Use the chat to describe fixes needed.");
+  }, []);
 
   const resetLayout = () => {
     if (!editor.current || !preview.current) return;
@@ -122,19 +183,19 @@ export const AppEditor = ({
   };
 
   useMount(() => {
-    if (deploy && project?._id) {
+    if (deploy && project?.id) {
       toast.success("Your project is deployed! 🎉", {
         action: {
           label: "See Project",
           onClick: () => {
             window.open(
-              `https://huggingface.co/spaces/${project?.space_id}`,
+              `/projects/${project?.id}`,
               "_blank"
             );
           },
         },
       });
-      router.replace(`/projects/${project?.space_id}`);
+      router.replace(`/projects/${project?.id}`);
     }
     if (htmlStorage) {
       removeHtmlStorage();
@@ -197,11 +258,17 @@ export const AppEditor = ({
       <Header tab={currentTab} onNewTab={setCurrentTab}>
         <LoadProject
           onSuccess={(project: Project) => {
-            router.push(`/projects/${project.space_id}`);
+            router.push(`/projects/${project.id}`);
           }}
         />
+        <DownloadButton
+          pages={pages}
+          currentPage={currentPageData}
+          projectTitle={project?.title}
+          disabled={isAiWorking}
+        />
         {/* for these buttons pass the whole pages */}
-        {project?._id ? (
+        {project?.id ? (
           <SaveButton pages={pages} prompts={prompts} />
         ) : (
           <DeployButton pages={pages} prompts={prompts} />
@@ -376,7 +443,18 @@ export const AppEditor = ({
             setSelectedElement(element);
             setCurrentTab("chat");
           }}
+          onError={handlePreviewError}
         />
+        {/* Preview Errors Panel */}
+        {previewErrors.length > 0 && currentTab === "preview" && (
+          <PreviewErrorsPanel
+            errors={previewErrors}
+            onAutoFix={handleAutoFix}
+            onDismiss={(id) => setPreviewErrors(prev => prev.filter(e => e.id !== id))}
+            onDismissAll={() => setPreviewErrors([])}
+            isFixing={isAutoFixing}
+          />
+        )}
       </main>
       <Footer
         pages={pages}

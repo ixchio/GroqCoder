@@ -25,7 +25,11 @@ const nextConfig: NextConfig = {
     return config;
   },
   images: {
-    remotePatterns: [new URL('https://huggingface.co/**')],
+    remotePatterns: [
+      { hostname: "huggingface.co" },
+      { hostname: "lh3.googleusercontent.com" },
+      { hostname: "avatars.githubusercontent.com" }
+    ],
   },
 };
 

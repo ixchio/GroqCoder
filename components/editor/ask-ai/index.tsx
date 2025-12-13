@@ -1,6 +1,5 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import classNames from "classnames";
 import { toast } from "sonner";
 import { useLocalStorage, useUpdateEffect } from "react-use";
@@ -22,9 +21,11 @@ import { TooltipContent } from "@radix-ui/react-tooltip";
 import { SelectedHtmlElement } from "./selected-html-element";
 import { FollowUpTooltip } from "./follow-up-tooltip";
 import { isTheSameHtml } from "@/lib/compare-html-diff";
-import { useCallAi } from "@/hooks/useCallAi";
+import { useCallAi, StreamStats } from "@/hooks/useCallAi";
 import { SelectedFiles } from "./selected-files";
 import { Uploader } from "./uploader";
+import { SuggestionChips } from "./suggestions";
+import { generateSmartSuggestions, Suggestion } from "@/components/contexts/chat-context";
 
 export function AskAI({
   isNew,
@@ -84,6 +85,26 @@ export function AskAI({
   const [isFollowUp, setIsFollowUp] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [files, setFiles] = useState<string[]>(images ?? []);
+  const [streamStats, setStreamStats] = useState<StreamStats>({
+    chars: 0,
+    tokens: 0,
+    elapsed: 0,
+    isStreaming: false,
+  });
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+
+  // Generate smart suggestions based on current HTML
+  useEffect(() => {
+    if (currentPage?.html && !isAiWorking) {
+      const smartSuggestions = generateSmartSuggestions(currentPage.html);
+      setSuggestions(smartSuggestions);
+    }
+  }, [currentPage?.html, isAiWorking]);
+
+  // Memoized callback to prevent unnecessary re-renders
+  const handleStreamProgress = useCallback((stats: StreamStats) => {
+    setStreamStats(stats);
+  }, []);
 
   const {
     callAiNewProject,
@@ -101,6 +122,7 @@ export function AskAI({
     pages,
     isAiWorking,
     setisAiWorking,
+    onStreamProgress: handleStreamProgress,
   });
 
   const selectedModel = useMemo(() => {
@@ -123,7 +145,8 @@ export function AskAI({
         provider,
         previousPrompts,
         selectedElementHtml,
-        selectedFiles
+        selectedFiles,
+        project?.projectType || "html"
       );
 
       if (result?.error) {
@@ -143,7 +166,8 @@ export function AskAI({
         [
           ...(previousPrompts ?? []),
           ...(htmlHistory?.map((h) => h.prompt) ?? []),
-        ]
+        ],
+        project?.projectType || "html"
       );
       if (result?.error) {
         handleError(result.error, result.message);
@@ -162,7 +186,8 @@ export function AskAI({
         handleThink,
         () => {
           setIsThinking(false);
-        }
+        },
+        project?.projectType || "html"
       );
 
       if (result?.error) {
@@ -224,6 +249,15 @@ export function AskAI({
     return isTheSameHtml(currentPage.html);
   }, [currentPage.html]);
 
+  // Handle suggestion chip click
+  const handleSuggestionSelect = (suggestion: Suggestion) => {
+    setPrompt(suggestion.prompt);
+    // Auto-submit after a short delay
+    setTimeout(() => {
+      callAi();
+    }, 100);
+  };
+
   return (
     <div className="px-3">
       <div className="relative bg-neutral-800 border border-neutral-700 rounded-2xl ring-[4px] focus-within:ring-neutral-500/30 focus-within:border-neutral-600 ring-transparent z-10 w-full group">
@@ -236,7 +270,7 @@ export function AskAI({
               }}
             >
               <p className="text-sm font-medium text-neutral-300 group-hover:text-neutral-200 transition-colors duration-200">
-                {isThinking ? "DeepSite is thinking..." : "DeepSite's plan"}
+                {isThinking ? "Groq Coder is thinking..." : "Groq Coder's plan"}
               </p>
               <ChevronDown
                 className={classNames(
@@ -280,6 +314,16 @@ export function AskAI({
             />
           </div>
         )}
+        {/* Smart Suggestions - show when not working and has suggestions */}
+        {!isAiWorking && suggestions.length > 0 && isFollowUp && !isSameHtml && (
+          <div className="px-4 pt-3">
+            <SuggestionChips
+              suggestions={suggestions}
+              onSelect={handleSuggestionSelect}
+              disabled={isAiWorking}
+            />
+          </div>
+        )}
         <div className="w-full relative flex items-center justify-between">
           {(isAiWorking || isUploading) && (
             <div className="absolute bg-neutral-800 top-0 left-4 w-[calc(100%-30px)] h-full z-1 flex items-start pt-3.5 justify-between max-lg:text-sm">
@@ -293,14 +337,16 @@ export function AskAI({
                   ) : (
                     <span className="inline-flex">
                       {[
-                        "D",
+                        "G",
+                        "r",
+                        "o",
+                        "q",
+                        " ",
+                        "C",
+                        "o",
+                        "d",
                         "e",
-                        "e",
-                        "p",
-                        "S",
-                        "i",
-                        "t",
-                        "e",
+                        "r",
                         " ",
                         "i",
                         "s",
@@ -313,23 +359,6 @@ export function AskAI({
                         "i",
                         "n",
                         "g",
-                        ".",
-                        ".",
-                        ".",
-                        " ",
-                        "W",
-                        "a",
-                        "i",
-                        "t",
-                        " ",
-                        "a",
-                        " ",
-                        "m",
-                        "o",
-                        "m",
-                        "e",
-                        "n",
-                        "t",
                         ".",
                         ".",
                         ".",
@@ -351,12 +380,28 @@ export function AskAI({
                 </p>
               </div>
               {isAiWorking && (
-                <div
-                  className="text-xs text-neutral-400 px-1 py-0.5 rounded-md border border-neutral-600 flex items-center justify-center gap-1.5 bg-neutral-800 hover:brightness-110 transition-all duration-200 cursor-pointer"
-                  onClick={stopController}
-                >
-                  <FaStopCircle />
-                  Stop generation
+                <div className="flex items-center gap-3">
+                  {/* Stream Stats Display */}
+                  {streamStats.isStreaming && (
+                    <div className="flex items-center gap-2 text-[10px] text-neutral-500 font-mono">
+                      <span className="bg-neutral-700/50 px-1.5 py-0.5 rounded">
+                        {streamStats.chars.toLocaleString()} chars
+                      </span>
+                      <span className="bg-neutral-700/50 px-1.5 py-0.5 rounded">
+                        ~{streamStats.tokens.toLocaleString()} tokens
+                      </span>
+                      <span className="bg-neutral-700/50 px-1.5 py-0.5 rounded">
+                        {streamStats.elapsed}s
+                      </span>
+                    </div>
+                  )}
+                  <div
+                    className="text-xs text-neutral-400 px-1 py-0.5 rounded-md border border-neutral-600 flex items-center justify-center gap-1.5 bg-neutral-800 hover:brightness-110 transition-all duration-200 cursor-pointer"
+                    onClick={stopController}
+                  >
+                    <FaStopCircle />
+                    Stop generation
+                  </div>
                 </div>
               )}
             </div>
@@ -371,10 +416,10 @@ export function AskAI({
             )}
             placeholder={
               selectedElement
-                ? `Ask DeepSite about ${selectedElement.tagName.toLowerCase()}...`
+                ? `Ask Groq Coder about ${selectedElement.tagName.toLowerCase()}...`
                 : isFollowUp && (!isSameHtml || pages?.length > 1)
-                ? "Ask DeepSite for edits"
-                : "Ask DeepSite anything..."
+                ? "Ask Groq Coder for edits"
+                : "Ask Groq Coder anything..."
             }
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
@@ -426,7 +471,7 @@ export function AskAI({
                   align="start"
                   className="bg-neutral-950 text-xs text-neutral-200 py-1 px-2 rounded-md -translate-y-0.5"
                 >
-                  Select an element on the page to ask DeepSite edit it
+                  Select an element on the page to ask Groq Coder edit it
                   directly.
                 </TooltipContent>
               </Tooltip>
@@ -459,16 +504,7 @@ export function AskAI({
           open={openProModal}
           onClose={() => setOpenProModal(false)}
         />
-        {pages.length === 1 && (
-          <div className="border border-sky-500/20 bg-sky-500/40 hover:bg-sky-600 transition-all duration-200 text-sky-500 pl-2 pr-4 py-1.5 text-xs rounded-full absolute top-0 -translate-y-[calc(100%+8px)] left-0 max-w-max flex items-center justify-start gap-2">
-            <span className="rounded-full text-[10px] font-semibold bg-white text-neutral-900 px-1.5 py-0.5">
-              NEW
-            </span>
-            <p className="text-sm text-neutral-100">
-              DeepSite can now create multiple pages at once. Try it!
-            </p>
-          </div>
-        )}
+
         {!isSameHtml && (
           <div className="absolute top-0 right-0 -translate-y-[calc(100%+8px)] select-none text-xs text-neutral-400 flex items-center justify-center gap-2 bg-neutral-800 border border-neutral-700 rounded-md p-1 pr-2.5">
             <label

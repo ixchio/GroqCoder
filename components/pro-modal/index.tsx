@@ -19,7 +19,6 @@ export const ProModal = ({
     if (pages && !isTheSameHtml(pages?.[0].html)) {
       setStorage(pages);
     }
-    window.open("https://huggingface.co/subscribe/pro?from=DeepSite", "_blank");
     onClose(false);
   };
   return (
@@ -42,12 +41,11 @@ export const ProModal = ({
             Only $9 to enhance your possibilities
           </h2>
           <p className="text-neutral-500 text-base mt-2 max-w-sm">
-            It seems like you have reached the monthly free limit of DeepSite.
+            It seems like you have reached the rate limit. Please wait a moment or sign in.
           </p>
           <hr className="bg-neutral-200 w-full max-w-[150px] my-6" />
           <p className="text-lg mt-3 text-neutral-900 font-semibold">
-            Upgrade to a <ProTag className="mx-1" /> Account, and unlock your
-            DeepSite high quota access ⚡
+            Sign in to unlock higher limits and save your projects ⚡
           </p>
           <ul className="mt-3 space-y-1 text-neutral-500">
             <li className="text-sm text-neutral-500 space-x-2 flex items-center justify-start gap-2 mb-3">
@@ -83,11 +81,4 @@ export const ProModal = ({
   );
 };
 
-const ProTag = ({ className }: { className?: string }) => (
-  <span
-    className={`${className} bg-linear-to-br shadow-green-500/10 dark:shadow-green-500/20 inline-block -skew-x-12 border border-gray-200 from-pink-300 via-green-200 to-yellow-200 text-xs font-bold text-black shadow-lg rounded-md px-2.5 py-0.5`}
-  >
-    PRO
-  </span>
-);
 export default ProModal;

@@ -47,7 +47,7 @@ export function ReImagine({
       setOpen(false);
       setUrl("");
       onRedesign(response.data.markdown);
-      toast.success("DeepSite is redesigning your site! Let him cook... 🔥");
+      toast.success("Groq Coder is redesigning your site! Let it cook... 🔥");
     } else {
       toast.error(response?.data?.error || "Failed to redesign the site.");
     }

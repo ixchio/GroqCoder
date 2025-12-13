@@ -1,104 +1,74 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCookie } from "react-use";
+import { useSession, signIn, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { User } from "@/types";
-import MY_TOKEN_KEY from "@/lib/get-cookie-name";
-import { api } from "@/lib/api";
-import { toast } from "sonner";
-import { getAuthCookieOptions, getIframeCookieOptions, getRemoveCookieOptions } from "@/lib/cookie-options";
 
+// Extended session user type that includes our custom fields
+interface ExtendedSessionUser {
+  id?: string;
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  bio?: string;
+  linkedinUrl?: string;
+  githubUsername?: string;
+}
 
-export const useUser = (initialData?: {
-  user: User | null;
-  errCode: number | null;
-}) => {
-  const cookie_name = MY_TOKEN_KEY();
-  const client = useQueryClient();
+export const useUser = () => {
   const router = useRouter();
-  const [, setCookie] = useCookie(cookie_name);
-  const [currentRoute, setCurrentRoute] = useCookie("deepsite-currentRoute");
+  const { data: session, status } = useSession();
 
-  const { data: { user, errCode } = { user: null, errCode: null }, isLoading } =
-    useQuery({
-      queryKey: ["user.me"],
-      queryFn: async () => {
-        return { user: initialData?.user, errCode: initialData?.errCode };
-      },
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-      refetchOnMount: false,
-      retry: false,
-      initialData: initialData
-        ? { user: initialData?.user, errCode: initialData?.errCode }
-        : undefined,
-      enabled: false,
-    });
-
-  const { data: loadingAuth } = useQuery({
-    queryKey: ["loadingAuth"],
-    queryFn: async () => false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    refetchOnMount: false,
-  });
-  const setLoadingAuth = (value: boolean) => {
-    client.setQueryData(["setLoadingAuth"], value);
-  };
+  // Map NextAuth session to User type
+  const sessionUser = session?.user as ExtendedSessionUser | undefined;
+  const user: User | null = sessionUser ? {
+    id: sessionUser.id || "",
+    name: sessionUser.name || "",
+    email: sessionUser.email || "",
+    image: sessionUser.image || "",
+    bio: sessionUser.bio || "",
+    linkedinUrl: sessionUser.linkedinUrl || "",
+    githubUsername: sessionUser.githubUsername || "",
+  } : null;
 
   const openLoginWindow = async () => {
-    setCurrentRoute(window.location.pathname, getIframeCookieOptions());
-    return router.push("/auth");
+    router.push("/auth/signin");
   };
 
-  const loginFromCode = async (code: string) => {
-    setLoadingAuth(true);
-    if (loadingAuth) return;
-    await api
-      .post("/auth", { code })
-      .then(async (res: any) => {
-        if (res.data) {
-          setCookie(res.data.access_token, getAuthCookieOptions(res.data.expires_in));
-          client.setQueryData(["user.me"], {
-            user: res.data.user,
-            errCode: null,
-          });
-          if (currentRoute) {
-            router.push(currentRoute);
-            setCurrentRoute("", getIframeCookieOptions());
-          } else {
-            router.push("/projects");
-          }
-          toast.success("Login successful");
-        }
-      })
-      .catch((err: any) => {
-        toast.error(err?.data?.message ?? err.message ?? "An error occurred");
-      })
-      .finally(() => {
-        setLoadingAuth(false);
-      });
+  const loginWithGithub = async () => {
+    await signIn("github", { callbackUrl: "/projects" });
+  };
+
+  const loginWithCredentials = async (email: string, password: string) => {
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    if (result?.error) {
+      toast.error(result.error);
+      return false;
+    }
+
+    toast.success("Login successful");
+    router.push("/projects");
+    return true;
   };
 
   const logout = async () => {
-    setCookie("", getRemoveCookieOptions());
-    router.push("/");
-    toast.success("Logout successful");
-    client.setQueryData(["user.me"], {
-      user: null,
-      errCode: null,
-    });
-    window.location.reload();
+    await signOut({ callbackUrl: "/" });
+    toast.success("Logged out successfully");
   };
 
   return {
     user,
-    errCode,
-    loading: isLoading || loadingAuth,
+    loading: status === "loading",
+    isAuthenticated: status === "authenticated",
     openLoginWindow,
-    loginFromCode,
+    loginWithGithub,
+    loginWithCredentials,
     logout,
   };
 };

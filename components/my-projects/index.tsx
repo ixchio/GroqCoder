@@ -25,11 +25,11 @@ export function MyProjects({
         <header className="flex items-center justify-between max-lg:flex-col gap-4">
           <div className="text-left">
             <h1 className="text-3xl font-bold text-white">
-              <span className="capitalize">{user.fullname}</span>&apos;s
-              DeepSite Projects
+              <span className="capitalize">{user.name}</span>&apos;s
+              Groq Coder Projects
             </h1>
             <p className="text-muted-foreground text-base mt-1 max-w-xl">
-              Create, manage, and explore your DeepSite projects.
+              Create, manage, and explore your Groq Coder projects.
             </p>
           </div>
           <LoadProject
@@ -48,7 +48,7 @@ export function MyProjects({
             Create Project
           </Link>
           {projects.map((project: Project) => (
-            <ProjectCard key={project._id} project={project} />
+            <ProjectCard key={project.id} project={project} />
           ))}
         </div>
       </section>

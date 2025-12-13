@@ -55,7 +55,7 @@ export const Uploader = ({
     });
 
     const response = await fetch(
-      `/api/me/projects/${project.space_id}/images`,
+      `/api/me/projects/${project.id}/images`,
       {
         method: "POST",
         body: data,
@@ -85,7 +85,7 @@ export const Uploader = ({
           align="start"
           className="!rounded-2xl !p-0 !bg-white !border-neutral-100 min-w-xs text-center overflow-hidden"
         >
-          {project?.space_id ? (
+          {project?.id ? (
             <>
               <header className="bg-neutral-50 p-6 border-b border-neutral-200/60">
                 <div className="flex items-center justify-center -space-x-4 mb-3">
@@ -103,7 +103,7 @@ export const Uploader = ({
                   Add Custom Images
                 </p>
                 <p className="text-sm text-neutral-500 mt-1.5">
-                  Upload images to your project and use them with DeepSite!
+                  Upload images to your project and use them with Groq Coder!
                 </p>
               </header>
               <main className="space-y-4 p-5">
@@ -196,7 +196,7 @@ export const Uploader = ({
         onClose={() => setOpen(false)}
         pages={pages}
         title="Log In to add Custom Images"
-        description="Log In through your Hugging Face account to publish your project and increase your monthly free limit."
+        description="Log In to publish your project and save your images."
       />
     </>
   );

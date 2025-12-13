@@ -40,7 +40,7 @@ export function DeployButton({
               </div>
             </PopoverTrigger>
             <PopoverContent
-              className="!rounded-2xl !p-0 !bg-white !border-neutral-200 min-w-xs text-center overflow-hidden"
+              className="!rounded-2xl !p-0 !bg-neutral-900 !border-neutral-700 min-w-xs text-center overflow-hidden"
               align="end"
             >
               <DeployButtonContent pages={pages} prompts={prompts} />
@@ -71,7 +71,7 @@ export function DeployButton({
           onClose={() => setOpen(false)}
           pages={pages}
           title="Log In to publish your Project"
-          description="Log In through your Hugging Face account to publish your project and increase your monthly free limit."
+          description="Sign in to save your project and share it with the community."
         />
       </div>
     </div>
