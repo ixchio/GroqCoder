@@ -221,80 +221,84 @@ ${CORE_BEHAVIOR_PROMPT}
 
 ${LIBRARY_REFERENCE}
 
-# MODIFICATION RULES
+# MODIFICATION APPROACH - CHOOSE WISELY
 
-1. **USE SEARCH/REPLACE - BUT BE CAREFUL**
-   - You must find the EXACT code snippet to replace.
-   - **CRITICAL**: Include at least 3-4 lines of *unchanged* context before and after the lines you change. This ensures the system can locate the correct block even if there are duplicate lines.
-   - If the file is small or you are changing most of it, you can just rewrite the whole file using the "NEW PAGE FORMAT" below.
+## OPTION 1: FULL FILE REWRITE (RECOMMENDED FOR MOST CHANGES)
+**Use this when:**
+- Adding new sections or components
+- Making multiple changes across the file
+- Changing layout, structure, or styles significantly
+- The file is under 500 lines
+- You're unsure about exact whitespace/formatting
 
-2. **PRECISE MATCHING**
-   - Your SEARCH block must match the existing code character-for-character (whitespace, indentation, etc.).
-   - Copy-paste the code from the existing file into your SEARCH block.
-   - Do not guess the code. If you can't see the code, do not try to search/replace it.
-   - **STRONGLY RECOMMENDED**: If the file is small (< 300 lines) OR you are making multiple changes, JUST REWRITE THE WHOLE FILE using the "NEW PAGE FORMAT". This is much safer and prevents errors.
-
-3. **IMPROVE AS YOU GO**
-   - When making changes, ensure the new code aligns with the "Loveable" design principles (clean, responsive, animated).
-
-${PROMPT_FOR_IMAGE_GENERATION}
-
-# OUTPUT FORMAT
-
-${UPDATE_PAGE_START}filename.html${UPDATE_PAGE_END}
-${SEARCH_START}
-  <3+ lines of original context>
-  <exact lines to change>
-  <3+ lines of original context>
-${DIVIDER}
-  <3+ lines of original context>
-  <new/modified content>
-  <3+ lines of original context>
-${REPLACE_END}
-
-# EXAMPLES
-
-## Changing text (note the context):
-${UPDATE_PAGE_START}index.html${UPDATE_PAGE_END}
-${SEARCH_START}
-    <header class="p-4">
-        <h1>Old Title</h1>
-        <p>Subtitle</p>
-    </header>
-${DIVIDER}
-    <header class="p-4">
-        <h1 class="text-2xl font-bold text-primary">New Title</h1>
-        <p class="text-muted-foreground">Subtitle</p>
-    </header>
-${REPLACE_END}
-
-## Adding content:
-${UPDATE_PAGE_START}index.html${UPDATE_PAGE_END}
-${SEARCH_START}
-    </section>
-</main>
-<footer>
-    <p>&copy; 2024</p>
-${DIVIDER}
-    </section>
-    
-    <section class="py-12 bg-muted/50">
-        <h2 class="text-xl font-semibold mb-4">New Section</h2>
-        <p>Content goes here.</p>
-    </section>
-</main>
-<footer>
-    <p>&copy; 2024</p>
-${REPLACE_END}
-
-# NEW PAGE (OR FULL REWRITE) FORMAT:
+**Format:**
 ${NEW_PAGE_START}filename.html${NEW_PAGE_END}
 \`\`\`html
 <!DOCTYPE html>
-<!-- Full HTML here -->
+<!-- Full updated HTML here -->
+</html>
 \`\`\`
 
-CRITICAL: The SEARCH block must be an EXACT MATCH. If you are unsure, include MORE context lines to be safe.`;
+## OPTION 2: SEARCH/REPLACE (ONLY FOR TINY, TARGETED EDITS)
+**Use ONLY when:**
+- Changing a SINGLE word, number, or attribute
+- Fixing a typo
+- You can GUARANTEE an exact match
+
+**CRITICAL RULES:**
+- Your SEARCH block must match EXACTLY (whitespace, indentation, characters)
+- Include 3+ lines of UNCHANGED context before and after
+- If you're changing more than 5 lines, use FULL FILE REWRITE instead
+
+**Format:**
+${UPDATE_PAGE_START}filename.html${UPDATE_PAGE_END}
+${SEARCH_START}
+  <unchanged context line 1>
+  <unchanged context line 2>
+  <line to change>
+  <unchanged context line 3>
+${DIVIDER}
+  <unchanged context line 1>
+  <unchanged context line 2>
+  <new/modified line>
+  <unchanged context line 3>
+${REPLACE_END}
+
+## EXAMPLES
+
+### Example 1: Full Rewrite (PREFERRED)
+User: "Add a footer with copyright"
+${NEW_PAGE_START}index.html${NEW_PAGE_END}
+\`\`\`html
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head><!-- ... existing head ... --></head>
+<body>
+    <!-- ... existing content ... -->
+    <footer class="py-6 text-center text-muted-foreground">
+        <p>&copy; 2024 Company. All rights reserved.</p>
+    </footer>
+</body>
+</html>
+\`\`\`
+
+### Example 2: Tiny Edit with SEARCH/REPLACE
+User: "Change the button color from blue to green"
+${UPDATE_PAGE_START}index.html${UPDATE_PAGE_END}
+${SEARCH_START}
+            <div class="flex gap-4">
+                <button class="bg-blue-500 px-4 py-2">Submit</button>
+            </div>
+${DIVIDER}
+            <div class="flex gap-4">
+                <button class="bg-green-500 px-4 py-2">Submit</button>
+            </div>
+${REPLACE_END}
+
+${PROMPT_FOR_IMAGE_GENERATION}
+
+**FINAL REMINDER:** When in doubt, use FULL FILE REWRITE. It's more reliable and prevents "unable to apply changes" errors.`;
+
 
 // Export for backward compatibility
 export const DESIGN_SYSTEM_PROMPT = CORE_BEHAVIOR_PROMPT;
