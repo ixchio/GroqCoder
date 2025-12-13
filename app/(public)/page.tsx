@@ -10,7 +10,7 @@ import { motion } from "framer-motion";
 
 export default function Home() {
   const { data: session } = useSession();
-  const [mounted, setMounted] = useState(false);
+
   const heroRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
@@ -37,15 +37,13 @@ export default function Home() {
   };
 
   useEffect(() => {
-    setMounted(true);
-    
     // Starfield Animation
     if (canvasRef.current) {
        const canvas = canvasRef.current;
        const ctx = canvas.getContext('2d');
        if (!ctx) return;
        
-       let stars: {x: number, y: number, z: number, px: number, py: number}[] = [];
+       const stars: {x: number, y: number, z: number, px: number, py: number}[] = [];
        const numStars = 800;
        
        canvas.width = window.innerWidth;
