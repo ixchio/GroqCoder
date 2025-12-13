@@ -1,5 +1,3 @@
-import Navigation from "@/components/public/navigation";
-
 export default async function PublicLayout({
   children,
 }: Readonly<{
@@ -8,7 +6,6 @@ export default async function PublicLayout({
   return (
     <div className="min-h-screen bg-black z-1 relative">
       <div className="background__noisy" />
-      <Navigation />
       {children}
     </div>
   );
