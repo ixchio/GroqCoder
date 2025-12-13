@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { getServerSession } from "next-auth";
 import OpenAI from "openai";
-import Groq from "groq-sdk";
+import { Groq } from "groq-sdk";
 
 import {
   ALL_PROVIDERS,
@@ -18,6 +18,7 @@ import {
 import {
   INITIAL_SYSTEM_PROMPT,
   FOLLOW_UP_SYSTEM_PROMPT,
+  DELTA_FOLLOW_UP_SYSTEM_PROMPT,
   NEW_PAGE_START,
   NEW_PAGE_END,
   MAX_REQUESTS_PER_IP,
@@ -58,7 +59,7 @@ function createClient(
     throw new Error(`Unknown provider: ${providerId}`);
   }
 
-  // Use Groq SDK for Groq provider for better performance
+  // Use native Groq SDK for Groq provider (faster, better streaming)
   if (providerId === "groq") {
     return new Groq({ apiKey });
   }
@@ -75,7 +76,7 @@ function createClient(
     });
   }
 
-  // Use OpenAI-compatible client for all other providers
+  // Use OpenAI-compatible client for all other providers (Cerebras, HuggingFace)
   return new OpenAI({
     apiKey,
     baseURL: provider.baseUrl,
@@ -366,6 +367,7 @@ export async function PUT(request: NextRequest) {
     pages,
     files,
     projectType = "html" as ProjectType,
+    useDeltaFormat = false, // Smooth streaming mode
   } = body;
 
   if (!prompt || !pages?.length) {
@@ -472,12 +474,57 @@ export async function PUT(request: NextRequest) {
     // Add the actual user request
     userMessage += `USER REQUEST:\n${prompt}\n\nPlease modify the HTML according to the request above. Use the SEARCH/REPLACE format to make precise changes.`;
 
-    // Select appropriate follow-up prompt
-    const systemPrompt = 
-      (projectType === "react" || projectType === "nextjs") 
-        ? REACT_FOLLOW_UP_PROMPT 
-        : FOLLOW_UP_SYSTEM_PROMPT;
+    // Select appropriate follow-up prompt based on project type and delta format
+    let systemPrompt: string;
+    if (useDeltaFormat) {
+      // Use delta format for smooth streaming (Lovable/v0 style)
+      systemPrompt = DELTA_FOLLOW_UP_SYSTEM_PROMPT;
+    } else if (projectType === "react" || projectType === "nextjs") {
+      systemPrompt = REACT_FOLLOW_UP_PROMPT;
+    } else {
+      systemPrompt = FOLLOW_UP_SYSTEM_PROMPT;
+    }
 
+    // If using delta format, stream the response for real-time updates
+    if (useDeltaFormat) {
+      const stream = await (client as any).chat.completions.create({
+        model: modelId,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userMessage },
+        ],
+        max_tokens: 16384,
+        stream: true, // Enable streaming for delta format
+      });
+
+      // Create streaming response
+      const encoder = new TextEncoder();
+      const readableStream = new ReadableStream({
+        async start(controller) {
+          try {
+            for await (const chunk of stream) {
+              const content = chunk.choices[0]?.delta?.content || "";
+              if (content) {
+                controller.enqueue(encoder.encode(content));
+              }
+            }
+            controller.close();
+          } catch (error) {
+            controller.error(error);
+          }
+        },
+      });
+
+      return new NextResponse(readableStream, {
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Cache-Control": "no-cache",
+          "Connection": "keep-alive",
+        },
+      });
+    }
+
+    // Non-streaming response (original behavior)
     const response = await (client as any).chat.completions.create({
       model: modelId,
       messages: [

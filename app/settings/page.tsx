@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, Key, Save, User, Loader2, Sparkles, Shield, ExternalLink, Github } from "lucide-react";
+import { ArrowLeft, Save, User, Loader2, Sparkles, ExternalLink, Github, Zap, Rocket } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
@@ -10,9 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-
-// Marker used by API to identify unchanged masked keys
-const MASKED_KEY_MARKER = "__MASKED__";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -25,20 +22,6 @@ export default function SettingsPage() {
     name: "",
     bio: "",
     linkedinUrl: "",
-    apiKeys: {
-      openai: "",
-      deepseek: "",
-      mistral: "",
-      google: "",
-    },
-  });
-
-  // Track which keys have been modified from their masked state
-  const [modifiedKeys, setModifiedKeys] = useState<Record<string, boolean>>({
-    openai: false,
-    deepseek: false,
-    mistral: false,
-    google: false,
   });
 
   useEffect(() => {
@@ -60,12 +43,6 @@ export default function SettingsPage() {
           name: data.user.name || "",
           bio: data.user.bio || "",
           linkedinUrl: data.user.linkedinUrl || "",
-          apiKeys: {
-            openai: data.user.apiKeys.openai || "",
-            deepseek: data.user.apiKeys.deepseek || "",
-            mistral: data.user.apiKeys.mistral || "",
-            google: data.user.apiKeys.google || "",
-          },
         });
       }
     } catch (error) {
@@ -83,41 +60,12 @@ export default function SettingsPage() {
     }));
   };
 
-  const handleApiKeyChange = (provider: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      apiKeys: {
-        ...prev.apiKeys,
-        [provider]: value,
-      },
-    }));
-    // Mark this key as modified
-    setModifiedKeys((prev) => ({
-      ...prev,
-      [provider]: true,
-    }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setSaveSuccess(false);
 
     try {
-      // Only send API keys that were actually modified
-      const apiKeysToSend: Record<string, string> = {};
-      for (const [provider, wasModified] of Object.entries(modifiedKeys)) {
-        if (wasModified) {
-          apiKeysToSend[provider] = formData.apiKeys[provider as keyof typeof formData.apiKeys];
-        } else {
-          // Send the marker to indicate "keep existing value"
-          const currentValue = formData.apiKeys[provider as keyof typeof formData.apiKeys];
-          if (currentValue === MASKED_KEY_MARKER) {
-            apiKeysToSend[provider] = MASKED_KEY_MARKER;
-          }
-        }
-      }
-
       const res = await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -125,7 +73,6 @@ export default function SettingsPage() {
           name: formData.name,
           bio: formData.bio,
           linkedinUrl: formData.linkedinUrl,
-          apiKeys: apiKeysToSend,
         }),
       });
 
@@ -134,15 +81,6 @@ export default function SettingsPage() {
         setSaveSuccess(true);
         toast.success("Settings saved successfully");
         setTimeout(() => setSaveSuccess(false), 2000);
-        // Reset modified tracking
-        setModifiedKeys({
-          openai: false,
-          deepseek: false,
-          mistral: false,
-          google: false,
-        });
-        // Refresh to get updated masked values
-        fetchSettings();
       } else {
         toast.error(data.error || "Failed to save settings");
       }
@@ -152,21 +90,6 @@ export default function SettingsPage() {
     } finally {
       setSaving(false);
     }
-  };
-
-  // Get display value for API key input
-  const getKeyDisplayValue = (provider: string): string => {
-    const value = formData.apiKeys[provider as keyof typeof formData.apiKeys];
-    if (value === MASKED_KEY_MARKER && !modifiedKeys[provider]) {
-      return ""; // Show empty but placeholder indicates key exists
-    }
-    return value === MASKED_KEY_MARKER ? "" : value;
-  };
-
-  // Check if key exists (for showing indicator)
-  const hasExistingKey = (provider: string): boolean => {
-    const value = formData.apiKeys[provider as keyof typeof formData.apiKeys];
-    return value === MASKED_KEY_MARKER || (modifiedKeys[provider] && value.length > 0);
   };
 
   if (loading) {
@@ -292,61 +215,45 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {/* API Keys Section */}
+            {/* Free AI Providers Info Section */}
             <div className="glass rounded-2xl p-6 md:p-8 animate-fade-in-up delay-200 hover-lift transition-all duration-300">
               <div className="flex items-center gap-4 mb-6">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-500/5 border border-purple-500/20">
-                  <Key className="w-6 h-6 text-purple-400" />
+                <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-green-500/5 border border-green-500/20">
+                  <Zap className="w-6 h-6 text-green-400" />
                 </div>
                 <div className="flex-1">
                   <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-                    API Keys (BYOK)
-                    <Shield className="w-4 h-4 text-green-400" />
+                    Free AI Models
+                    <Rocket className="w-4 h-4 text-green-400" />
                   </h2>
-                  <p className="text-sm text-neutral-400">Add your own API keys to use premium models</p>
+                  <p className="text-sm text-neutral-400">All models are 100% free - no API keys required!</p>
                 </div>
               </div>
 
-              {/* Security notice */}
-              <div className="mb-6 p-4 rounded-xl bg-green-500/5 border border-green-500/20">
-                <div className="flex items-start gap-3">
-                  <Shield className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-green-300/80">
-                    Your API keys are encrypted with AES-256-GCM and stored securely. We never log or share your keys.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Free providers showcase */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { key: "openai", label: "OpenAI", placeholder: "sk-...", gradient: "from-emerald-500/20 to-emerald-500/5" },
-                  { key: "deepseek", label: "DeepSeek", placeholder: "sk-...", gradient: "from-blue-500/20 to-blue-500/5" },
-                  { key: "mistral", label: "Mistral", placeholder: "Enter API key", gradient: "from-orange-500/20 to-orange-500/5" },
-                  { key: "google", label: "Google Gemini", placeholder: "AI...", gradient: "from-red-500/20 to-red-500/5" },
+                  { name: "Groq", icon: "⚡", description: "Lightning fast LPU" },
+                  { name: "Cerebras", icon: "🧠", description: "Ultra-fast WSE" },
+                  { name: "Hugging Face", icon: "🤗", description: "Open models" },
+                  { name: "OpenRouter", icon: "🌐", description: "100+ models" },
                 ].map((provider) => (
-                  <div key={provider.key} className="group">
-                    <Label className="text-neutral-300 text-sm font-medium mb-2 block">
-                      {provider.label} API Key
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        type="password"
-                        value={getKeyDisplayValue(provider.key)}
-                        onChange={(e) => handleApiKeyChange(provider.key, e.target.value)}
-                        placeholder={hasExistingKey(provider.key) && !modifiedKeys[provider.key] ? "••••••••••••" : provider.placeholder}
-                        className="bg-neutral-950/50 border-neutral-800 text-white placeholder:text-neutral-600 focus:border-purple-500/50 focus:ring-purple-500/20 transition-all duration-300 rounded-xl h-12 pr-10"
-                      />
-                      {hasExistingKey(provider.key) && (
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                          <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                        </div>
-                      )}
-                    </div>
-                    {hasExistingKey(provider.key) && !modifiedKeys[provider.key] && (
-                      <p className="text-xs text-neutral-500 mt-1">Key saved • Enter new value to replace</p>
-                    )}
+                  <div
+                    key={provider.name}
+                    className="p-4 rounded-xl bg-gradient-to-br from-neutral-900 to-neutral-950 border border-neutral-800 hover:border-green-500/30 transition-all duration-300"
+                  >
+                    <div className="text-2xl mb-2">{provider.icon}</div>
+                    <h3 className="font-medium text-white text-sm">{provider.name}</h3>
+                    <p className="text-xs text-neutral-500 mt-1">{provider.description}</p>
                   </div>
                 ))}
+              </div>
+
+              <div className="mt-6 p-4 rounded-xl bg-green-500/5 border border-green-500/20">
+                <p className="text-sm text-green-300/80 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  All AI models are provided free of charge. Just start building!
+                </p>
               </div>
             </div>
 

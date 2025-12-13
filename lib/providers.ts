@@ -1,8 +1,8 @@
 // Provider and Model Configuration for Groq Coder
-// Free open-source AI models from Groq, Cerebras, and Together AI
-// Plus BYOK support for OpenAI, DeepSeek, Mistral, and Google Gemini
+// Free open-source AI models from Groq, OpenRouter, Cerebras, and Hugging Face
+// All providers use free tier - no user API keys required
 
-export type ProviderType = "groq" | "cerebras" | "huggingface" | "openrouter" | "openai" | "deepseek" | "mistral" | "google";
+export type ProviderType = "groq" | "cerebras" | "huggingface" | "openrouter";
 
 export interface Provider {
   id: ProviderType;
@@ -32,7 +32,7 @@ export const FREE_PROVIDERS: Record<string, Provider> = {
     name: "Groq",
     baseUrl: "https://api.groq.com/openai/v1",
     requiresUserKey: false,
-    description: "Ultra-fast inference with Groq LPU",
+    description: "Lightning fast LPU inference - ultra-low latency",
     icon: "⚡",
   },
   cerebras: {
@@ -40,7 +40,7 @@ export const FREE_PROVIDERS: Record<string, Provider> = {
     name: "Cerebras",
     baseUrl: "https://api.cerebras.ai/v1",
     requiresUserKey: false,
-    description: "1M free tokens/day with Cerebras",
+    description: "Ultra-fast inference with Cerebras WSE - 1M free tokens/day",
     icon: "🧠",
   },
   huggingface: {
@@ -56,159 +56,55 @@ export const FREE_PROVIDERS: Record<string, Provider> = {
     name: "OpenRouter",
     baseUrl: "https://openrouter.ai/api/v1",
     requiresUserKey: false,
-    description: "Access 100+ models via OpenRouter",
+    description: "Access 100+ free models via OpenRouter",
     icon: "🌐",
   },
 };
 
-// BYOK PROVIDERS - User must provide their own API key
-export const BYOK_PROVIDERS: Record<string, Provider> = {
-  openai: {
-    id: "openai",
-    name: "OpenAI",
-    baseUrl: "https://api.openai.com/v1",
-    requiresUserKey: true,
-    description: "GPT-4o, GPT-4 Turbo, and more",
-    icon: "🤖",
-  },
-  deepseek: {
-    id: "deepseek",
-    name: "DeepSeek",
-    baseUrl: "https://api.deepseek.com/v1",
-    requiresUserKey: true,
-    description: "DeepSeek V3, R1, and Coder models",
-    icon: "🔍",
-  },
-  mistral: {
-    id: "mistral",
-    name: "Mistral",
-    baseUrl: "https://api.mistral.ai/v1",
-    requiresUserKey: true,
-    description: "Mistral Large, Medium, and Codestral",
-    icon: "🌬️",
-  },
-  google: {
-    id: "google",
-    name: "Google Gemini",
-    baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai",
-    requiresUserKey: true,
-    description: "Gemini Pro and Flash models",
-    icon: "✨",
-  },
-};
+// No BYOK providers - all free!
+export const BYOK_PROVIDERS: Record<string, Provider> = {};
 
 // All providers combined
 export const ALL_PROVIDERS = { ...FREE_PROVIDERS, ...BYOK_PROVIDERS };
 
 // FREE MODELS - Available without user API key
 export const FREE_MODELS: AIModel[] = [
-  // Groq Models
+  // ========== GROQ MODELS (Lightning fast LPU inference) ==========
   {
     id: "llama-3.3-70b-versatile",
-    name: "Llama 3.3 70B Versatile",
+    name: "Llama 3.3 70B (Groq)",
     provider: "groq",
     contextLength: 128000,
-    description: "Meta's most capable model, great for complex tasks",
+    description: "Meta's Llama 3.3 on Groq LPU - lightning fast inference",
     isNew: true,
   },
-  {
-    id: "llama-3.1-8b-instant",
-    name: "Llama 3.1 8B Instant",
-    provider: "groq",
-    contextLength: 128000,
-    description: "Fast and efficient for quick generations",
-  },
-  {
-    id: "llama-3.3-70b-specdec",
-    name: "Llama 3.3 70B SpecDec",
-    provider: "groq",
-    contextLength: 128000,
-    description: "Speculative decoding for faster inference",
-    isNew: true,
-  },
-  {
-    id: "mixtral-8x7b-32768",
-    name: "Mixtral 8x7B",
-    provider: "groq",
-    contextLength: 32768,
-    description: "MoE model with excellent coding abilities",
-    isDeprecating: true,
-    deprecationDate: "2025-03-20",
-  },
-  {
-    id: "gemma2-9b-it",
-    name: "Gemma 2 9B",
-    provider: "groq",
-    contextLength: 8192,
-    description: "Google's open model, great for general tasks",
-  },
-  {
-    id: "qwen-qwq-32b",
-    name: "Qwen QWQ 32B",
-    provider: "groq",
-    contextLength: 32768,
-    description: "Alibaba's reasoning model",
-    isNew: true,
-  },
-  {
-    id: "deepseek-r1-distill-llama-70b",
-    name: "DeepSeek R1 Distill 70B",
-    provider: "groq",
-    contextLength: 128000,
-    description: "DeepSeek R1 distilled into Llama architecture",
-    isThinker: true,
-    isNew: true,
-  },
-  {
-    id: "compound-beta",
-    name: "Compound Beta",
-    provider: "groq",
-    contextLength: 128000,
-    description: "Groq's experimental compound AI system",
-    isNew: true,
-  },
-  {
-    id: "openai/gpt-oss-120b",
-    name: "GPT-OSS 120B",
-    provider: "groq",
-    contextLength: 8192,
-    description: "OpenAI's open-source reasoning model on Groq",
-    isThinker: true,
-    isNew: true,
-  },
-  {
-    id: "qwen/qwen3-32b",
-    name: "Qwen3 32B",
-    provider: "groq",
-    contextLength: 4096,
-    description: "Alibaba's Qwen3 model on Groq",
-    isNew: true,
-  },
-  {
-    id: "moonshotai/kimi-k2-instruct-0905",
-    name: "Kimi K2 Instruct",
-    provider: "groq",
-    contextLength: 4096,
-    description: "Moonshot AI's Kimi K2 model on Groq",
-    isNew: true,
-  },
-  // Cerebras Models
+
+  // ========== CEREBRAS MODELS (Ultra-fast, 1M free tokens/day) ==========
   {
     id: "llama-3.3-70b",
     name: "Llama 3.3 70B (Cerebras)",
     provider: "cerebras",
     contextLength: 8192,
-    description: "Llama 3.3 on Cerebras wafer-scale engine",
+    description: "Meta's Llama 3.3 on Cerebras WSE - ultra-fast inference",
+    isNew: true,
+  },
+  {
+    id: "llama3.1-8b",
+    name: "Llama 3.1 8B (Cerebras)",
+    provider: "cerebras",
+    contextLength: 8192,
+    description: "Fast and efficient for quick generations",
   },
   {
     id: "qwen-3-32b",
-    name: "Qwen 3 32B",
+    name: "Qwen 3 32B (Cerebras)",
     provider: "cerebras",
     contextLength: 32768,
-    description: "Alibaba's latest Qwen model",
+    description: "Alibaba's latest Qwen model - great for coding",
     isNew: true,
   },
-  // Hugging Face Models (Free Inference API)
+
+  // ========== HUGGING FACE MODELS (Free Inference API) ==========
   {
     id: "mistralai/Mistral-7B-Instruct-v0.3",
     name: "Mistral 7B Instruct",
@@ -228,16 +124,24 @@ export const FREE_MODELS: AIModel[] = [
     name: "Qwen 2.5 Coder 7B",
     provider: "huggingface",
     contextLength: 32768,
-    description: "Free code generation model",
+    description: "Specialized code generation model",
     isNew: true,
   },
-  // OpenRouter Free Models
+  {
+    id: "microsoft/Phi-3-mini-4k-instruct",
+    name: "Phi-3 Mini 4K",
+    provider: "huggingface",
+    contextLength: 4096,
+    description: "Microsoft's compact powerhouse",
+  },
+
+  // ========== OPENROUTER FREE MODELS ==========
   {
     id: "qwen/qwen3-coder:free",
     name: "Qwen3 Coder (Free)",
     provider: "openrouter",
     contextLength: 128000,
-    description: "Alibaba's latest Qwen3 coding model",
+    description: "Alibaba's best coding model - recommended!",
     isNew: true,
   },
   {
@@ -316,77 +220,8 @@ export const FREE_MODELS: AIModel[] = [
   },
 ];
 
-// BYOK MODELS - Require user's own API key
-export const BYOK_MODELS: AIModel[] = [
-  // OpenAI Models
-  {
-    id: "gpt-4o",
-    name: "GPT-4o",
-    provider: "openai",
-    contextLength: 128000,
-    description: "OpenAI's most capable multimodal model",
-  },
-  {
-    id: "gpt-4o-mini",
-    name: "GPT-4o Mini",
-    provider: "openai",
-    contextLength: 128000,
-    description: "Fast and affordable GPT-4 variant",
-  },
-  {
-    id: "gpt-4-turbo",
-    name: "GPT-4 Turbo",
-    provider: "openai",
-    contextLength: 128000,
-    description: "GPT-4 with improved capabilities",
-  },
-  // DeepSeek Models
-  {
-    id: "deepseek-chat",
-    name: "DeepSeek V3",
-    provider: "deepseek",
-    contextLength: 64000,
-    description: "DeepSeek's latest chat model",
-  },
-  {
-    id: "deepseek-reasoner",
-    name: "DeepSeek R1",
-    provider: "deepseek",
-    contextLength: 64000,
-    description: "Advanced reasoning model",
-    isThinker: true,
-  },
-  // Mistral Models
-  {
-    id: "mistral-large-latest",
-    name: "Mistral Large",
-    provider: "mistral",
-    contextLength: 128000,
-    description: "Mistral's flagship model",
-  },
-  {
-    id: "codestral-latest",
-    name: "Codestral",
-    provider: "mistral",
-    contextLength: 32000,
-    description: "Specialized for code generation",
-  },
-  // Google Gemini Models
-  {
-    id: "gemini-1.5-pro",
-    name: "Gemini 1.5 Pro",
-    provider: "google",
-    contextLength: 2000000,
-    description: "Google's most capable model",
-  },
-  {
-    id: "gemini-1.5-flash",
-    name: "Gemini 1.5 Flash",
-    provider: "google",
-    contextLength: 1000000,
-    description: "Fast and efficient Gemini variant",
-  },
-];
+// No BYOK MODELS - all free!
+export const BYOK_MODELS: AIModel[] = [];
 
 // All models combined
 export const ALL_MODELS = [...FREE_MODELS, ...BYOK_MODELS];
@@ -416,7 +251,7 @@ export function isProviderFree(providerId: string): boolean {
   return providerId in FREE_PROVIDERS;
 }
 
-// Default model selection
+// Default model selection - Groq LPU for lightning fast inference
 export const DEFAULT_MODEL = "llama-3.3-70b-versatile";
 export const DEFAULT_PROVIDER = "groq";
 
@@ -441,4 +276,3 @@ export const MODELS = ALL_MODELS.map((model) => ({
   isNew: model.isNew,
   isThinker: model.isThinker,
 }));
-

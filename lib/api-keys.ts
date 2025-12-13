@@ -117,6 +117,7 @@ export function maskKey(key: string): string {
 
 /**
  * Validate API key format for known providers
+ * Note: All providers are now free tier, no user API keys needed
  */
 export function validateApiKeyFormat(provider: string, key: string): { valid: boolean; error?: string } {
   if (!key || key.trim() === "") {
@@ -124,35 +125,6 @@ export function validateApiKeyFormat(provider: string, key: string): { valid: bo
   }
   
   const trimmed = key.trim();
-  
-  switch (provider) {
-    case "openai":
-      if (!trimmed.startsWith("sk-")) {
-        return { valid: false, error: "OpenAI keys should start with 'sk-'" };
-      }
-      if (trimmed.length < 20) {
-        return { valid: false, error: "OpenAI key seems too short" };
-      }
-      break;
-      
-    case "deepseek":
-      if (!trimmed.startsWith("sk-")) {
-        return { valid: false, error: "DeepSeek keys should start with 'sk-'" };
-      }
-      break;
-      
-    case "google":
-      if (trimmed.length < 20) {
-        return { valid: false, error: "Google API key seems too short" };
-      }
-      break;
-      
-    case "mistral":
-      if (trimmed.length < 20) {
-        return { valid: false, error: "Mistral API key seems too short" };
-      }
-      break;
-  }
   
   // General validation - no whitespace, reasonable length
   if (/\s/.test(trimmed)) {

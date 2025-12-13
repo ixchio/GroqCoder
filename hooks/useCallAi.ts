@@ -290,7 +290,7 @@ export const useCallAi = ({
     }
   };
 
-  const callAiFollowUp = async (prompt: string, model: string | undefined, provider: string | undefined, previousPrompts: string[], selectedElementHtml?: string, files?: string[], projectType: string = "html") => {
+  const callAiFollowUp = async (prompt: string, model: string | undefined, provider: string | undefined, previousPrompts: string[], selectedElementHtml?: string, files?: string[], projectType: string = "html") => {
     if (isAiWorking) return;
     if (!prompt.trim()) return;
     
@@ -358,6 +358,161 @@ export const useCallAi = ({
       if (error.openLogin) {
         return { error: "login_required" };
       }
+      return { error: "network_error", message: error.message };
+    }
+  };
+
+  /**
+   * Smooth streaming follow-up using delta-based updates (Lovable/v0 style)
+   * This applies changes in real-time as the AI generates them
+   */
+  const callAiFollowUpSmooth = async (
+    prompt: string,
+    model: string | undefined,
+    provider: string | undefined,
+    previousPrompts: string[],
+    iframeRef: React.RefObject<HTMLIFrameElement>,
+    selectedElementHtml?: string,
+    files?: string[],
+    projectType: string = "html"
+  ) => {
+    if (isAiWorking) return;
+    if (!prompt.trim()) return;
+
+    // Check if iframe is available
+    const iframe = iframeRef.current;
+    if (!iframe?.contentDocument) {
+      console.warn("[SmoothStreaming] No iframe available, falling back to standard method");
+      return callAiFollowUp(prompt, model, provider, previousPrompts, selectedElementHtml, files, projectType);
+    }
+
+    setisAiWorking(true);
+
+    const abortController = new AbortController();
+    setController(abortController);
+
+    const startTime = Date.now();
+
+    try {
+      onNewPrompt(prompt);
+
+      // Import smooth streaming utilities dynamically to avoid SSR issues
+      const { StreamingDiffParser, SmoothDOMOrchestrator } = await import("@/lib/smooth-streaming");
+
+      const iframeDoc = iframe.contentDocument;
+      const parser = new StreamingDiffParser();
+      const orchestrator = new SmoothDOMOrchestrator(iframeDoc);
+
+      // Report initial state
+      onStreamProgress?.({
+        chars: 0,
+        tokens: 0,
+        elapsed: 0,
+        isStreaming: true,
+      });
+
+      const request = await fetch("/api/ask-ai", {
+        method: "PUT",
+        body: JSON.stringify({
+          prompt,
+          provider,
+          previousPrompts,
+          model,
+          pages,
+          selectedElementHtml,
+          files,
+          projectType,
+          useDeltaFormat: true, // Tell API to use delta format
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "x-forwarded-for": window.location.hostname,
+        },
+        signal: abortController.signal,
+      });
+
+      if (!request.ok) {
+        const errorData = await request.json();
+        setisAiWorking(false);
+        
+        if (errorData.openLogin) {
+          return { error: "login_required" };
+        } else if (errorData.openSelectProvider) {
+          return { error: "provider_required", message: errorData.message };
+        }
+        
+        toast.error(errorData.message || "Request failed");
+        return { error: "api_error", message: errorData.message };
+      }
+
+      if (!request.body) {
+        throw new Error("No response body");
+      }
+
+      // Stream and apply updates in real-time
+      const reader = request.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let totalChars = 0;
+      let totalDiffs = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          // Flush any remaining updates
+          await orchestrator.forceFlush();
+
+          // Report completion
+          onStreamProgress?.({
+            chars: totalChars,
+            tokens: Math.round(totalChars / 4),
+            elapsed: Math.round((Date.now() - startTime) / 1000),
+            isStreaming: false,
+          });
+
+          break;
+        }
+
+        const chunk = decoder.decode(value, { stream: true });
+        totalChars += chunk.length;
+
+        // Parse deltas in real-time
+        const diffs = parser.parseStreamChunk(chunk);
+
+        // Apply each diff immediately
+        for (const diff of diffs) {
+          orchestrator.queueUpdate(diff);
+          totalDiffs++;
+        }
+
+        // Report progress
+        onStreamProgress?.({
+          chars: totalChars,
+          tokens: Math.round(totalChars / 4),
+          elapsed: Math.round((Date.now() - startTime) / 1000),
+          isStreaming: true,
+        });
+      }
+
+      // Success!
+      toast.success(`✨ Applied ${totalDiffs} updates smoothly`);
+      setisAiWorking(false);
+
+      if (audio.current) audio.current.play();
+
+      // Return success (pages stay the same, updates applied directly to DOM)
+      return { success: true, totalDiffs };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      setisAiWorking(false);
+      
+      if (error.name === "AbortError") {
+        console.log("[SmoothStreaming] Request cancelled");
+        return { error: "cancelled" };
+      }
+
+      toast.error(error.message);
       return { error: "network_error", message: error.message };
     }
   };
@@ -507,6 +662,7 @@ export const useCallAi = ({
   return {
     callAiNewProject,
     callAiFollowUp,
+    callAiFollowUpSmooth,
     callAiNewPage,
     stopController,
     controller,
