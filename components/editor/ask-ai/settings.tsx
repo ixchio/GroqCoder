@@ -95,11 +95,13 @@ export function Settings({
                         label,
                         isNew = false,
                         isThinker = false,
+                        isVision = false,
                       }: {
                         value: string;
                         label: string;
                         isNew?: boolean;
                         isThinker?: boolean;
+                        isVision?: boolean;
                       }) => (
                         <SelectItem
                           key={value}
@@ -108,7 +110,12 @@ export function Settings({
                           disabled={isThinker && isFollowUp}
                         >
                           {label}
-                          {isNew && (
+                          {isVision && (
+                            <span className="text-xs bg-gradient-to-br from-purple-400 to-purple-600 text-white rounded-full px-1.5 py-0.5 ml-1">
+                              Vision
+                            </span>
+                          )}
+                          {isNew && !isVision && (
                             <span className="text-xs bg-gradient-to-br from-sky-400 to-sky-600 text-white rounded-full px-1.5 py-0.5">
                               New
                             </span>

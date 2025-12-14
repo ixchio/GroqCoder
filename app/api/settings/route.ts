@@ -37,6 +37,7 @@ export async function GET() {
         bio: user.bio,
         linkedinUrl: user.linkedinUrl,
         githubUsername: user.githubUsername,
+        customRules: user.customRules || "",
         apiKeys,
       },
     });
@@ -55,7 +56,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, bio, linkedinUrl, apiKeys } = body;
+    const { name, bio, linkedinUrl, apiKeys, customRules } = body;
 
     // Validate profile fields
     if (name && typeof name !== "string") {
@@ -79,10 +80,19 @@ export async function PUT(request: NextRequest) {
 
     await connectToDatabase();
 
+    // Validate customRules
+    if (customRules !== undefined && typeof customRules !== "string") {
+      return NextResponse.json({ ok: false, error: "Invalid custom rules" }, { status: 400 });
+    }
+    if (customRules && customRules.length > 2000) {
+      return NextResponse.json({ ok: false, error: "Custom rules must be 2000 characters or less" }, { status: 400 });
+    }
+
     const updateData: any = {
       name,
       bio,
       linkedinUrl,
+      customRules: customRules ?? undefined,
     };
 
     // Handle API keys update

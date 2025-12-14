@@ -23,6 +23,7 @@ export interface AIModel {
   isDeprecating?: boolean;
   deprecationDate?: string;
   isThinker?: boolean;
+  isVision?: boolean;
 }
 
 // FREE PROVIDERS - No user API key required (uses app's free tier)
@@ -218,6 +219,35 @@ export const FREE_MODELS: AIModel[] = [
     description: "Arcee AI's compact model",
     isNew: true,
   },
+
+  // ========== OPENROUTER FREE VISION MODELS ==========
+  {
+    id: "google/gemma-3-27b-it:free",
+    name: "Gemma 3 27B Vision (Free)",
+    provider: "openrouter",
+    contextLength: 32000,
+    description: "Google's Gemma 3 with vision capability",
+    isNew: true,
+    isVision: true,
+  },
+  {
+    id: "amazon/nova-2-lite-v1:free",
+    name: "Nova 2 Lite Vision (Free)",
+    provider: "openrouter",
+    contextLength: 32000,
+    description: "Amazon's Nova 2 Lite with vision",
+    isNew: true,
+    isVision: true,
+  },
+  {
+    id: "nvidia/nemotron-nano-12b-v2-vl:free",
+    name: "Nemotron Nano 12B Vision (Free)",
+    provider: "openrouter",
+    contextLength: 32000,
+    description: "NVIDIA's Nemotron with vision capability",
+    isNew: true,
+    isVision: true,
+  },
 ];
 
 // No BYOK MODELS - all free!
@@ -275,4 +305,5 @@ export const MODELS = ALL_MODELS.map((model) => ({
   autoProvider: model.provider,
   isNew: model.isNew,
   isThinker: model.isThinker,
+  isVision: model.isVision,
 }));

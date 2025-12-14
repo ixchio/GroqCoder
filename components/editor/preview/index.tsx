@@ -195,7 +195,7 @@ export const Preview = ({
       
       {!isAiWorking && hoveredElement && selectedElement && (
         <div
-          className="cursor-pointer absolute bg-sky-500/10 border-[2px] border-dashed border-sky-500 rounded-r-lg rounded-b-lg p-3 z-10 pointer-events-none"
+          className="cursor-pointer absolute z-10 pointer-events-none transition-all duration-150 ease-out"
           style={{
             top:
               selectedElement.getBoundingClientRect().top +
@@ -207,8 +207,22 @@ export const Preview = ({
             height: selectedElement.getBoundingClientRect().height,
           }}
         >
-          <span className="bg-sky-500 rounded-t-md text-sm text-neutral-100 px-2 py-0.5 -translate-y-7 absolute top-0 left-0">
+          {/* Outer glow effect */}
+          <div className="absolute -inset-1 bg-gradient-to-r from-purple-500/30 via-sky-500/30 to-purple-500/30 rounded-lg blur-sm animate-pulse" />
+          
+          {/* Main highlight box */}
+          <div className="absolute inset-0 bg-sky-500/10 border-2 border-sky-400 rounded-lg shadow-[0_0_10px_rgba(56,189,248,0.5)]">
+            {/* Corner indicators */}
+            <div className="absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 border-sky-400 rounded-tl-sm" />
+            <div className="absolute -top-1 -right-1 w-3 h-3 border-t-2 border-r-2 border-sky-400 rounded-tr-sm" />
+            <div className="absolute -bottom-1 -left-1 w-3 h-3 border-b-2 border-l-2 border-sky-400 rounded-bl-sm" />
+            <div className="absolute -bottom-1 -right-1 w-3 h-3 border-b-2 border-r-2 border-sky-400 rounded-br-sm" />
+          </div>
+          
+          {/* Element tag label */}
+          <span className="absolute top-0 left-0 -translate-y-full bg-gradient-to-r from-sky-500 to-purple-500 text-white text-xs font-medium px-2.5 py-1 rounded-t-md shadow-lg">
             {htmlTagToText(selectedElement.tagName.toLowerCase())}
+            <span className="ml-1.5 opacity-70">Click to select</span>
           </span>
         </div>
       )}

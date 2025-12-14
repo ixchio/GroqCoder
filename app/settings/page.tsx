@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, Save, User, Loader2, Sparkles, ExternalLink, Github, Zap, Rocket } from "lucide-react";
+import { ArrowLeft, Save, User, Loader2, Sparkles, ExternalLink, Github, Zap, Rocket, FileCode } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
@@ -22,6 +22,7 @@ export default function SettingsPage() {
     name: "",
     bio: "",
     linkedinUrl: "",
+    customRules: "",
   });
 
   useEffect(() => {
@@ -43,6 +44,7 @@ export default function SettingsPage() {
           name: data.user.name || "",
           bio: data.user.bio || "",
           linkedinUrl: data.user.linkedinUrl || "",
+          customRules: data.user.customRules || "",
         });
       }
     } catch (error) {
@@ -73,6 +75,7 @@ export default function SettingsPage() {
           name: formData.name,
           bio: formData.bio,
           linkedinUrl: formData.linkedinUrl,
+          customRules: formData.customRules,
         }),
       });
 
@@ -211,6 +214,46 @@ export default function SettingsPage() {
                     />
                     <p className="text-xs text-neutral-500 mt-1">Automatically set from GitHub login</p>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Project Context Section */}
+            <div className="glass rounded-2xl p-6 md:p-8 animate-fade-in-up delay-150 hover-lift transition-all duration-300">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-500/5 border border-purple-500/20">
+                  <FileCode className="w-6 h-6 text-purple-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                    Project Context
+                    <Sparkles className="w-4 h-4 text-purple-400 animate-pulse" />
+                  </h2>
+                  <p className="text-sm text-neutral-400">Define global rules for AI code generation</p>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="group">
+                  <Label htmlFor="customRules" className="text-neutral-300 text-sm font-medium mb-2 block">
+                    Global Rules
+                  </Label>
+                  <Textarea
+                    id="customRules"
+                    value={formData.customRules}
+                    onChange={(e) => handleChange("customRules", e.target.value)}
+                    className="bg-neutral-950/50 border-neutral-800 text-white min-h-[150px] placeholder:text-neutral-600 focus:border-purple-500/50 focus:ring-purple-500/20 transition-all duration-300 rounded-xl resize-none font-mono text-sm"
+                    placeholder="e.g. Always use these colors: #FF6B6B, #4ECDC4, #45B7D1&#10;Use Inter font for headings&#10;Include dark mode support"
+                    maxLength={2000}
+                  />
+                  <p className="text-xs text-neutral-500 mt-1">{formData.customRules.length}/2000 characters</p>
+                </div>
+                
+                <div className="p-4 rounded-xl bg-purple-500/5 border border-purple-500/20">
+                  <p className="text-sm text-purple-300/80 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4" />
+                    These rules will be included in every AI prompt for consistent code generation.
+                  </p>
                 </div>
               </div>
             </div>

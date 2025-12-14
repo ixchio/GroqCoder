@@ -212,6 +212,16 @@ export async function POST(request: NextRequest) {
     // Create client
     const client = createClient(providerId, apiKey);
 
+    // Fetch user's custom rules if logged in
+    let customRules = "";
+    if (session?.user?.email) {
+      await connectToDatabase();
+      const user = await User.findOne({ email: session.user.email });
+      if (user?.customRules) {
+        customRules = user.customRules;
+      }
+    }
+
     // Helper to estimate token count (rough: ~4 chars per token)
     const estimateTokens = (text: string) => Math.ceil(text.length / 4);
 
@@ -226,11 +236,17 @@ export async function POST(request: NextRequest) {
       return truncated + "\n<!-- ...content truncated due to length... -->";
     };
 
+    // Build system prompt with custom rules
+    let systemPromptContent = getSystemPrompt(projectType);
+    if (customRules) {
+      systemPromptContent += `\n\n## GLOBAL PROJECT CONTEXT (User-defined rules - ALWAYS follow these):\n${customRules}`;
+    }
+
     // Prepare messages
     const messages: any[] = [
       {
         role: "system",
-        content: getSystemPrompt(projectType),
+        content: systemPromptContent,
       },
     ];
 
@@ -474,6 +490,15 @@ export async function PUT(request: NextRequest) {
     // Add the actual user request
     userMessage += `USER REQUEST:\n${prompt}\n\nPlease modify the HTML according to the request above. Use the SEARCH/REPLACE format to make precise changes.`;
 
+    // Fetch user's custom rules if logged in
+    let customRules = "";
+    if (session?.user?.email) {
+      const user = await User.findOne({ email: session.user.email });
+      if (user?.customRules) {
+        customRules = user.customRules;
+      }
+    }
+
     // Select appropriate follow-up prompt based on project type and delta format
     let systemPrompt: string;
     if (useDeltaFormat) {
@@ -483,6 +508,11 @@ export async function PUT(request: NextRequest) {
       systemPrompt = REACT_FOLLOW_UP_PROMPT;
     } else {
       systemPrompt = FOLLOW_UP_SYSTEM_PROMPT;
+    }
+
+    // Append custom rules if present
+    if (customRules) {
+      systemPrompt += `\n\n## GLOBAL PROJECT CONTEXT (User-defined rules - ALWAYS follow these):\n${customRules}`;
     }
 
     // If using delta format, stream the response for real-time updates

@@ -3,7 +3,7 @@ import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import classNames from "classnames";
 import { toast } from "sonner";
 import { useLocalStorage, useUpdateEffect } from "react-use";
-import { ArrowUp, ChevronDown, Crosshair } from "lucide-react";
+import { ArrowUp, ChevronDown, Crosshair, Camera } from "lucide-react";
 import { FaStopCircle } from "react-icons/fa";
 
 import ProModal from "@/components/pro-modal";
@@ -448,7 +448,37 @@ export function AskAI({
               selectedFiles={selectedFiles}
               project={project}
             />
-            {isNew && <ReImagine onRedesign={(md) => callAi(md)} />}
+            {isNew && (
+              <>
+                <ReImagine onRedesign={(md) => callAi(md)} />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="iconXs"
+                      variant="outline"
+                      className="!border-neutral-600 !text-neutral-400 hover:!border-purple-500 hover:!text-purple-400"
+                      onClick={() => {
+                        // Set a vision model and prompt for cloning
+                        const visionModel = MODELS.find((m: { isVision?: boolean }) => m.isVision);
+                        if (visionModel) {
+                          setModel(visionModel.value);
+                        }
+                        setPrompt("Clone this screenshot exactly. Recreate the UI with pixel-perfect accuracy, matching all colors, typography, spacing, and layout.");
+                        toast.info("Select a screenshot image using the Images button, then click send!");
+                      }}
+                    >
+                      <Camera className="size-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    align="start"
+                    className="bg-neutral-950 text-xs text-neutral-200 py-1 px-2 rounded-md -translate-y-0.5"
+                  >
+                    Clone a screenshot - Upload an image and AI will recreate it
+                  </TooltipContent>
+                </Tooltip>
+              </>
+            )}
             {!isSameHtml && (
               <Tooltip>
                 <TooltipTrigger asChild>

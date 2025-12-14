@@ -10,6 +10,7 @@ export interface IUser extends Document {
   linkedinUrl?: string;
   githubId?: string;
   githubUsername?: string;
+  customRules?: string; // Global project context / rules for AI
   apiKeys?: {
     openai?: string;
     deepseek?: string;
@@ -65,6 +66,11 @@ const UserSchema = new Schema<IUser>(
     },
     githubUsername: {
       type: String,
+    },
+    customRules: {
+      type: String,
+      default: "",
+      maxlength: 2000,
     },
     apiKeys: {
       openai: { type: String, default: "" },

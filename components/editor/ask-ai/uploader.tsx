@@ -55,7 +55,7 @@ export const Uploader = ({
     });
 
     const response = await fetch(
-      `/api/me/projects/${project.id}/images`,
+      `/api/projects/${project.id}/images`,
       {
         method: "POST",
         body: data,

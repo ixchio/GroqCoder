@@ -40,6 +40,7 @@ import { DeployButton } from "./deploy-button";
 import { DownloadButton } from "./download-button";
 import { Page, Project } from "@/types";
 import { SaveButton } from "./save-button";
+import { ShareButton } from "./share-button";
 import { LoadProject } from "../my-projects/load-project";
 import { isTheSameHtml } from "@/lib/compare-html-diff";
 import { ListPages } from "./pages";
@@ -267,6 +268,7 @@ export const AppEditor = ({
           projectTitle={project?.title}
           disabled={isAiWorking}
         />
+        <ShareButton project={project} />
         {/* for these buttons pass the whole pages */}
         {project?.id ? (
           <SaveButton pages={pages} prompts={prompts} />
