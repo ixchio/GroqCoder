@@ -1,5 +1,4 @@
 import mongoose, { Schema, Document } from "mongoose";
-
 export interface IUser extends Document {
   _id: mongoose.Types.ObjectId;
   email: string;
@@ -32,7 +31,7 @@ const UserSchema = new Schema<IUser>(
     },
     password: {
       type: String,
-      required: false, // Not required for GitHub OAuth users
+      required: false, // not required for gitHub OAuth users
     },
     name: {
       type: String,
@@ -62,7 +61,7 @@ const UserSchema = new Schema<IUser>(
     githubId: {
       type: String,
       unique: true,
-      sparse: true, // Allow null values while maintaining uniqueness
+      sparse: true, // aallow null values while maintaining uniqueness
     },
     githubUsername: {
       type: String,
@@ -83,8 +82,6 @@ const UserSchema = new Schema<IUser>(
     timestamps: true,
   }
 );
-
-// Index for faster lookups
 UserSchema.index({ email: 1 });
 UserSchema.index({ githubId: 1 });
 

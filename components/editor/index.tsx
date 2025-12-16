@@ -44,6 +44,7 @@ import { ShareButton } from "./share-button";
 import { LoadProject } from "../my-projects/load-project";
 import { isTheSameHtml } from "@/lib/compare-html-diff";
 import { ListPages } from "./pages";
+import { PromptHistoryPanel } from "./prompt-history-panel";
 
 export const AppEditor = ({
   project,
@@ -366,6 +367,7 @@ export const AppEditor = ({
                 currentPage={currentPageData}
                 htmlHistory={htmlHistory}
                 previousPrompts={prompts}
+                iframeRef={iframeRef}
                 onSuccess={(newPages, p: string) => {
                   const currentHistory = [...htmlHistory];
                   currentHistory.unshift({
@@ -421,6 +423,13 @@ export const AppEditor = ({
                 setSelectedElement={setSelectedElement}
                 setSelectedFiles={setSelectedFiles}
                 selectedFiles={selectedFiles}
+              />
+              {/* Prompt History Panel - Shows iterative refinement history */}
+              <PromptHistoryPanel
+                htmlHistory={htmlHistory}
+                currentPrompts={prompts}
+                setPages={setPages}
+                isAiWorking={isAiWorking}
               />
             </div>
             <div

@@ -371,7 +371,7 @@ export const useCallAi = ({
     model: string | undefined,
     provider: string | undefined,
     previousPrompts: string[],
-    iframeRef: React.RefObject<HTMLIFrameElement>,
+    iframeRef: React.RefObject<HTMLIFrameElement | null>,
     selectedElementHtml?: string,
     files?: string[],
     projectType: string = "html"

@@ -48,6 +48,7 @@ export function AskAI({
   onSuccess,
   setPages,
   setCurrentPage,
+  iframeRef,
 }: {
   project?: Project | null;
   currentPage: Page;
@@ -69,6 +70,7 @@ export function AskAI({
   setSelectedFiles: React.Dispatch<React.SetStateAction<string[]>>;
   setPages: React.Dispatch<React.SetStateAction<Page[]>>;
   setCurrentPage: React.Dispatch<React.SetStateAction<string>>;
+  iframeRef: React.RefObject<HTMLIFrameElement | null>;
 }) {
   const refThink = useRef<HTMLDivElement | null>(null);
 
@@ -108,7 +110,7 @@ export function AskAI({
 
   const {
     callAiNewProject,
-    callAiFollowUp,
+    callAiFollowUpSmooth,
     callAiNewPage,
     stopController,
     audio: hookAudio,
@@ -134,27 +136,29 @@ export function AskAI({
     if (!redesignMarkdown && !prompt.trim()) return;
 
     if (isFollowUp && !redesignMarkdown && !isSameHtml) {
-      // Use follow-up function for existing projects
+      // Use smooth streaming for follow-ups (Lovable/v0.dev style)
       const selectedElementHtml = selectedElement
         ? selectedElement.outerHTML
         : "";
 
-      const result = await callAiFollowUp(
+      // Try smooth streaming first, fall back to regular if no iframe
+      const result = await callAiFollowUpSmooth(
         prompt,
         model,
         provider,
         previousPrompts,
+        iframeRef,
         selectedElementHtml,
         selectedFiles,
         project?.projectType || "html"
       );
 
-      if (result?.error) {
-        handleError(result.error, result.message);
+      if (result && 'error' in result && result.error) {
+        handleError(result.error, 'message' in result ? result.message : undefined);
         return;
       }
 
-      if (result?.success) {
+      if (result && 'success' in result && result.success) {
         setPrompt("");
       }
     } else if (isFollowUp && pages.length > 1 && isSameHtml) {
