@@ -12,17 +12,6 @@ import Link from "next/link";
 import { useLocalStorage } from "react-use";
 import { isTheSameHtml } from "@/lib/compare-html-diff";
 
-const DEVICES = [
-  {
-    name: "desktop",
-    icon: FaLaptopCode,
-  },
-  {
-    name: "mobile",
-    icon: FaMobileAlt,
-  },
-];
-
 export function Footer({
   pages,
   isNew = false,
@@ -116,30 +105,63 @@ export function Footer({
           <RefreshCcw className="size-3.5" />
           <span className="max-lg:hidden">Refresh Preview</span>
         </Button>
-        <div className="flex items-center rounded-full p-0.5 bg-neutral-700/70 relative overflow-hidden z-0 max-lg:hidden gap-0.5">
-          <div
-            className={classNames(
-              "absolute left-0.5 top-0.5 rounded-full bg-white size-7 -z-[1] transition-all duration-200",
-              {
-                "translate-x-[calc(100%+2px)]": device === "mobile",
-              }
-            )}
-          />
-          {DEVICES.map((deviceItem) => (
-            <button
-              key={deviceItem.name}
+        {/* Beautiful Device Toggle */}
+        <div className="flex items-center gap-1.5 max-lg:hidden">
+          <div className="relative flex items-center rounded-xl p-1 bg-neutral-800/90 backdrop-blur-sm border border-neutral-700/50 shadow-lg">
+            {/* Animated sliding background pill */}
+            <div
               className={classNames(
-                "rounded-full text-neutral-300 size-7 flex items-center justify-center cursor-pointer",
+                "absolute top-1 h-[calc(100%-8px)] w-10 rounded-lg transition-all duration-300 ease-out",
+                "bg-gradient-to-r from-violet-500 to-fuchsia-500 shadow-lg",
+                "shadow-violet-500/30",
                 {
-                  "!text-black": device === deviceItem.name,
-                  "hover:bg-neutral-800": device !== deviceItem.name,
+                  "left-1": device === "desktop",
+                  "left-[calc(50%+2px)]": device === "mobile",
                 }
               )}
-              onClick={() => setDevice(deviceItem.name as "desktop" | "mobile")}
+            />
+            
+            {/* Desktop Button */}
+            <button
+              onClick={() => setDevice("desktop")}
+              className={classNames(
+                "relative z-10 flex items-center justify-center w-10 h-8 rounded-lg transition-all duration-300 cursor-pointer",
+                {
+                  "text-white": device === "desktop",
+                  "text-neutral-400 hover:text-neutral-200": device !== "desktop",
+                }
+              )}
+              title="Desktop view"
             >
-              <deviceItem.icon className="text-sm" />
+              <FaLaptopCode className="size-4" />
             </button>
-          ))}
+            
+            {/* Mobile Button */}
+            <button
+              onClick={() => setDevice("mobile")}
+              className={classNames(
+                "relative z-10 flex items-center justify-center w-10 h-8 rounded-lg transition-all duration-300 cursor-pointer",
+                {
+                  "text-white": device === "mobile",
+                  "text-neutral-400 hover:text-neutral-200": device !== "mobile",
+                }
+              )}
+              title="Mobile view"
+            >
+              <FaMobileAlt className="size-4" />
+            </button>
+          </div>
+          
+          {/* Current device label with subtle animation */}
+          <span className={classNames(
+            "text-xs font-medium px-2 py-1 rounded-md transition-all duration-300",
+            {
+              "text-violet-400 bg-violet-500/10": device === "desktop",
+              "text-fuchsia-400 bg-fuchsia-500/10": device === "mobile",
+            }
+          )}>
+            {device === "desktop" ? "Desktop" : "Mobile"}
+          </span>
         </div>
       </div>
     </footer>
