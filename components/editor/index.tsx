@@ -45,6 +45,7 @@ import { LoadProject } from "../my-projects/load-project";
 import { isTheSameHtml } from "@/lib/compare-html-diff";
 import { ListPages } from "./pages";
 import { PromptHistoryPanel } from "./prompt-history-panel";
+import { DeviceConfig, DEVICE_PRESETS } from "./device-selector";
 
 export const AppEditor = ({
   project,
@@ -80,7 +81,8 @@ export const AppEditor = ({
 
   const [currentTab, setCurrentTab] = useState("chat");
   const [currentPage, setCurrentPage] = useState("index.html");
-  const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
+  const [device, setDevice] = useState<DeviceConfig>(DEVICE_PRESETS[0]);
+  const [isDeviceRotated, setIsDeviceRotated] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [isAiWorking, setIsAiWorking] = useState(false);
   const [isEditableModeEnabled, setIsEditableModeEnabled] = useState(false);
@@ -444,6 +446,7 @@ export const AppEditor = ({
           isAiWorking={isAiWorking}
           ref={preview}
           device={device}
+          isDeviceRotated={isDeviceRotated}
           pages={pages}
           setCurrentPage={setCurrentPage}
           currentTab={currentTab}
@@ -475,6 +478,8 @@ export const AppEditor = ({
         device={device}
         isNew={isNew}
         setDevice={setDevice}
+        isDeviceRotated={isDeviceRotated}
+        setIsDeviceRotated={setIsDeviceRotated}
       />
     </section>
   );

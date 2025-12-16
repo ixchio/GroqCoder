@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 import { GridPattern } from "@/components/magic-ui/grid-pattern";
 import { htmlTagToText } from "@/lib/html-tag-to-text";
 import { Page } from "@/types";
+import { DeviceConfig } from "../device-selector";
+import { DeviceFrame } from "../device-frame";
 
 // Error type for preview errors
 export interface PreviewErrorInfo {
@@ -24,6 +26,7 @@ export const Preview = ({
   isAiWorking,
   ref,
   device,
+  isDeviceRotated,
   currentTab,
   iframeRef,
   pages,
@@ -39,7 +42,8 @@ export const Preview = ({
   setCurrentPage: React.Dispatch<React.SetStateAction<string>>;
   ref: React.RefObject<HTMLDivElement | null>;
   iframeRef?: React.RefObject<HTMLIFrameElement | null>;
-  device: "desktop" | "mobile";
+  device: DeviceConfig;
+  isDeviceRotated: boolean;
   currentTab: string;
   isEditableModeEnabled?: boolean;
   onClickElement?: (element: HTMLElement) => void;
@@ -226,20 +230,26 @@ export const Preview = ({
           </span>
         </div>
       )}
-      <iframe
-        id="preview-iframe"
-        ref={iframeRef}
-        title="output"
-        className={classNames(
-          "w-full select-none transition-all duration-200 bg-black h-full",
-          {
-            "pointer-events-none": isResizing || isAiWorking,
-            "lg:max-w-md lg:mx-auto lg:!rounded-[42px] lg:border-[8px] lg:border-neutral-700 lg:shadow-2xl lg:h-[80dvh] lg:max-h-[996px]":
-              device === "mobile",
-            "lg:border-[8px] lg:border-neutral-700 lg:shadow-2xl lg:rounded-[24px]":
-              currentTab !== "preview" && device === "desktop",
+      <DeviceFrame device={device} isRotated={isDeviceRotated} className="h-full w-full flex items-center justify-center">
+        <iframe
+          id="preview-iframe"
+          ref={iframeRef}
+          title="output"
+          className={classNames(
+            "select-none transition-all duration-500 bg-white w-full h-full",
+            {
+              "pointer-events-none": isResizing || isAiWorking,
+              "lg:border-[8px] lg:border-neutral-700 lg:shadow-2xl lg:rounded-[24px]":
+                device.type === "desktop" && currentTab !== "preview",
+            }
+          )}
+          style={
+            device.type !== "desktop"
+              ? {
+                  borderRadius: Math.max((device.borderRadius ?? 24) - (device.bezelWidth ?? 12) - 4, 4),
+                }
+              : undefined
           }
-        )}
         srcDoc={isAiWorking ? (throttledHtml as string) : html}
         onLoad={() => {
           if (iframeRef?.current?.contentWindow?.document?.body) {
@@ -296,7 +306,8 @@ export const Preview = ({
             }
           }
         }}
-      />
+        />
+      </DeviceFrame>
     </div>
   );
 };
