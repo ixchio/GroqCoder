@@ -1,4 +1,7 @@
 import { HelpCircle, LogIn, RefreshCcw, SparkleIcon } from "lucide-react";
+import { FaMobileAlt } from "react-icons/fa";
+import { FaLaptopCode } from "react-icons/fa6";
+import classNames from "classnames";
 import { HtmlHistory, Page } from "@/types";
 import { Button } from "@/components/ui/button";
 import { MdAdd } from "react-icons/md";
@@ -8,7 +11,17 @@ import { useUser } from "@/hooks/useUser";
 import Link from "next/link";
 import { useLocalStorage } from "react-use";
 import { isTheSameHtml } from "@/lib/compare-html-diff";
-import { DeviceConfig, DeviceSelector } from "../device-selector";
+
+const DEVICES = [
+  {
+    name: "desktop",
+    icon: FaLaptopCode,
+  },
+  {
+    name: "mobile",
+    icon: FaMobileAlt,
+  },
+];
 
 export function Footer({
   pages,
@@ -18,18 +31,14 @@ export function Footer({
   device,
   setDevice,
   iframeRef,
-  isDeviceRotated,
-  setIsDeviceRotated,
 }: {
   pages: Page[];
   isNew?: boolean;
   htmlHistory?: HtmlHistory[];
-  device: DeviceConfig;
+  device: "desktop" | "mobile";
   setPages: (pages: Page[]) => void;
   iframeRef?: React.RefObject<HTMLIFrameElement | null>;
-  setDevice: React.Dispatch<React.SetStateAction<DeviceConfig>>;
-  isDeviceRotated: boolean;
-  setIsDeviceRotated: React.Dispatch<React.SetStateAction<boolean>>;
+  setDevice: React.Dispatch<React.SetStateAction<"desktop" | "mobile">>;
 }) {
   const { user, openLoginWindow } = useUser();
 
@@ -107,14 +116,30 @@ export function Footer({
           <RefreshCcw className="size-3.5" />
           <span className="max-lg:hidden">Refresh Preview</span>
         </Button>
-        {/* Advanced Device Selector */}
-        <div className="max-lg:hidden">
-          <DeviceSelector
-            selectedDevice={device}
-            isRotated={isDeviceRotated}
-            onDeviceChange={setDevice}
-            onRotateToggle={() => setIsDeviceRotated((prev) => !prev)}
+        <div className="flex items-center rounded-full p-0.5 bg-neutral-700/70 relative overflow-hidden z-0 max-lg:hidden gap-0.5">
+          <div
+            className={classNames(
+              "absolute left-0.5 top-0.5 rounded-full bg-white size-7 -z-[1] transition-all duration-200",
+              {
+                "translate-x-[calc(100%+2px)]": device === "mobile",
+              }
+            )}
           />
+          {DEVICES.map((deviceItem) => (
+            <button
+              key={deviceItem.name}
+              className={classNames(
+                "rounded-full text-neutral-300 size-7 flex items-center justify-center cursor-pointer",
+                {
+                  "!text-black": device === deviceItem.name,
+                  "hover:bg-neutral-800": device !== deviceItem.name,
+                }
+              )}
+              onClick={() => setDevice(deviceItem.name as "desktop" | "mobile")}
+            >
+              <deviceItem.icon className="text-sm" />
+            </button>
+          ))}
         </div>
       </div>
     </footer>
