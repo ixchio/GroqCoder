@@ -44,7 +44,7 @@ export const DEVICE_PRESETS: DeviceConfig[] = [
     height: 852,
     hasDynamicIsland: true,
     borderRadius: 55,
-    bezelWidth: 12,
+    bezelWidth: 10,
   },
   {
     id: "iphone-14",
@@ -54,7 +54,7 @@ export const DEVICE_PRESETS: DeviceConfig[] = [
     height: 844,
     hasNotch: true,
     borderRadius: 47,
-    bezelWidth: 12,
+    bezelWidth: 10,
   },
   {
     id: "iphone-se",
@@ -62,8 +62,8 @@ export const DEVICE_PRESETS: DeviceConfig[] = [
     type: "mobile",
     width: 375,
     height: 667,
-    borderRadius: 24,
-    bezelWidth: 12,
+    borderRadius: 30,
+    bezelWidth: 10,
   },
   // Android
   {
@@ -72,7 +72,7 @@ export const DEVICE_PRESETS: DeviceConfig[] = [
     type: "mobile",
     width: 360,
     height: 780,
-    borderRadius: 32,
+    borderRadius: 35,
     bezelWidth: 8,
   },
   {
@@ -81,18 +81,18 @@ export const DEVICE_PRESETS: DeviceConfig[] = [
     type: "mobile",
     width: 412,
     height: 915,
-    borderRadius: 36,
-    bezelWidth: 10,
+    borderRadius: 40,
+    bezelWidth: 8,
   },
   // Tablets
   {
-    id: "ipad-pro-12",
-    name: "iPad Pro 12.9\"",
+    id: "ipad-pro",
+    name: "iPad Pro",
     type: "tablet",
     width: 1024,
     height: 1366,
-    borderRadius: 18,
-    bezelWidth: 20,
+    borderRadius: 22,
+    bezelWidth: 16,
   },
   {
     id: "ipad-mini",
@@ -100,8 +100,8 @@ export const DEVICE_PRESETS: DeviceConfig[] = [
     type: "tablet",
     width: 744,
     height: 1133,
-    borderRadius: 18,
-    bezelWidth: 16,
+    borderRadius: 22,
+    bezelWidth: 14,
   },
 ];
 
@@ -132,20 +132,20 @@ export function DeviceSelector({
   };
 
   return (
-    <div className="flex items-center gap-1 rounded-full p-0.5 bg-neutral-700/70 relative overflow-visible z-0">
+    <div className="flex items-center gap-1 rounded-lg p-1 bg-neutral-800/80 backdrop-blur-sm border border-neutral-700/50">
       {/* Quick toggle buttons */}
       <div className="flex items-center gap-0.5">
-        {["desktop", "mobile", "tablet"].map((type) => {
+        {(["desktop", "mobile", "tablet"] as const).map((type) => {
           const Icon = getDeviceIcon(type);
           const isActive = selectedDevice.type === type;
           return (
             <button
               key={type}
               className={classNames(
-                "rounded-full size-7 flex items-center justify-center cursor-pointer transition-all duration-200",
+                "rounded-md size-8 flex items-center justify-center cursor-pointer transition-all duration-150",
                 {
-                  "bg-white text-black": isActive,
-                  "text-neutral-300 hover:bg-neutral-600": !isActive,
+                  "bg-white text-black shadow-sm": isActive,
+                  "text-neutral-400 hover:text-white hover:bg-neutral-700": !isActive,
                 }
               )}
               onClick={() => {
@@ -154,25 +154,28 @@ export function DeviceSelector({
               }}
               title={type.charAt(0).toUpperCase() + type.slice(1)}
             >
-              <Icon className="text-sm" />
+              <Icon className="size-4" />
             </button>
           );
         })}
       </div>
+
+      {/* Divider */}
+      <div className="w-px h-5 bg-neutral-700" />
 
       {/* Device dropdown */}
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <button
             className={classNames(
-              "flex items-center gap-1.5 text-xs font-medium px-2 py-1.5 rounded-full transition-all",
-              "text-neutral-300 hover:bg-neutral-600",
-              { "bg-neutral-600": isOpen }
+              "flex items-center gap-1.5 text-xs font-medium px-2 py-1.5 rounded-md transition-all",
+              "text-neutral-300 hover:text-white hover:bg-neutral-700",
+              { "bg-neutral-700 text-white": isOpen }
             )}
           >
-            <span className="max-w-[100px] truncate">{selectedDevice.name}</span>
+            <span className="max-w-[80px] truncate">{selectedDevice.name}</span>
             <ChevronDown
-              className={classNames("size-3 transition-transform", {
+              className={classNames("size-3 transition-transform duration-200", {
                 "rotate-180": isOpen,
               })}
             />
@@ -180,10 +183,10 @@ export function DeviceSelector({
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="end"
-          className="w-56 bg-neutral-900 border-neutral-700"
+          className="w-52 bg-neutral-900/95 backdrop-blur-md border-neutral-700"
         >
-          {/* Desktop */}
-          <div className="px-2 py-1.5 text-xs text-neutral-500 font-medium">
+          {/* Group: Desktop */}
+          <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">
             Desktop
           </div>
           {DEVICE_PRESETS.filter((d) => d.type === "desktop").map((device) => (
@@ -191,22 +194,22 @@ export function DeviceSelector({
               key={device.id}
               onClick={() => onDeviceChange(device)}
               className={classNames(
-                "flex items-center gap-2 cursor-pointer",
+                "flex items-center gap-2 cursor-pointer text-sm",
                 { "bg-sky-500/20 text-sky-400": selectedDevice.id === device.id }
               )}
             >
-              <FaLaptopCode className="size-4" />
-              <span>{device.name}</span>
-              <span className="ml-auto text-xs text-neutral-500">
+              <FaLaptopCode className="size-3.5" />
+              <span className="flex-1">{device.name}</span>
+              <span className="text-[10px] text-neutral-500">
                 {device.width}×{device.height}
               </span>
             </DropdownMenuItem>
           ))}
 
-          <DropdownMenuSeparator className="bg-neutral-700" />
+          <DropdownMenuSeparator className="bg-neutral-700/50" />
 
-          {/* Mobile */}
-          <div className="px-2 py-1.5 text-xs text-neutral-500 font-medium">
+          {/* Group: Mobile */}
+          <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">
             Mobile
           </div>
           {DEVICE_PRESETS.filter((d) => d.type === "mobile").map((device) => (
@@ -214,34 +217,22 @@ export function DeviceSelector({
               key={device.id}
               onClick={() => onDeviceChange(device)}
               className={classNames(
-                "flex items-center gap-2 cursor-pointer",
+                "flex items-center gap-2 cursor-pointer text-sm",
                 { "bg-sky-500/20 text-sky-400": selectedDevice.id === device.id }
               )}
             >
-              <FaMobileAlt className="size-4" />
-              <div className="flex-1">
-                <span>{device.name}</span>
-                {device.hasDynamicIsland && (
-                  <span className="ml-1.5 text-[10px] px-1 py-0.5 rounded bg-purple-500/20 text-purple-400">
-                    Dynamic Island
-                  </span>
-                )}
-                {device.hasNotch && (
-                  <span className="ml-1.5 text-[10px] px-1 py-0.5 rounded bg-neutral-500/20 text-neutral-400">
-                    Notch
-                  </span>
-                )}
-              </div>
-              <span className="text-xs text-neutral-500">
+              <FaMobileAlt className="size-3.5" />
+              <span className="flex-1">{device.name}</span>
+              <span className="text-[10px] text-neutral-500">
                 {device.width}×{device.height}
               </span>
             </DropdownMenuItem>
           ))}
 
-          <DropdownMenuSeparator className="bg-neutral-700" />
+          <DropdownMenuSeparator className="bg-neutral-700/50" />
 
-          {/* Tablet */}
-          <div className="px-2 py-1.5 text-xs text-neutral-500 font-medium">
+          {/* Group: Tablet */}
+          <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">
             Tablet
           </div>
           {DEVICE_PRESETS.filter((d) => d.type === "tablet").map((device) => (
@@ -249,13 +240,13 @@ export function DeviceSelector({
               key={device.id}
               onClick={() => onDeviceChange(device)}
               className={classNames(
-                "flex items-center gap-2 cursor-pointer",
+                "flex items-center gap-2 cursor-pointer text-sm",
                 { "bg-sky-500/20 text-sky-400": selectedDevice.id === device.id }
               )}
             >
-              <FaTablet className="size-4" />
-              <span>{device.name}</span>
-              <span className="ml-auto text-xs text-neutral-500">
+              <FaTablet className="size-3.5" />
+              <span className="flex-1">{device.name}</span>
+              <span className="text-[10px] text-neutral-500">
                 {device.width}×{device.height}
               </span>
             </DropdownMenuItem>
@@ -266,17 +257,17 @@ export function DeviceSelector({
       {/* Rotate button - only for non-desktop */}
       {selectedDevice.type !== "desktop" && (
         <>
-          <div className="w-px h-4 bg-neutral-600" />
+          <div className="w-px h-5 bg-neutral-700" />
           <button
             className={classNames(
-              "rounded-full size-7 flex items-center justify-center cursor-pointer transition-all duration-200",
-              "text-neutral-300 hover:bg-neutral-600",
-              { "bg-neutral-600 text-sky-400": isRotated }
+              "rounded-md size-8 flex items-center justify-center cursor-pointer transition-all duration-150",
+              "text-neutral-400 hover:text-white hover:bg-neutral-700",
+              { "bg-sky-500/20 text-sky-400": isRotated }
             )}
             onClick={onRotateToggle}
-            title="Rotate device"
+            title={isRotated ? "Portrait" : "Landscape"}
           >
-            <RotateCcw className={classNames("size-3.5 transition-transform", {
+            <RotateCcw className={classNames("size-4 transition-transform duration-200", {
               "rotate-90": isRotated,
             })} />
           </button>
