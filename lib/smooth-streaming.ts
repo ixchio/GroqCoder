@@ -175,11 +175,13 @@ export class SmoothDOMOrchestrator {
   private isUpdating: boolean = false;
   private styleElement: HTMLStyleElement | null = null;
   private batchTimeout: ReturnType<typeof setTimeout> | null = null;
+  private appliedCount: number = 0;
   
   private readonly BATCH_DELAY = 50; // ms - group rapid updates
 
   constructor(private doc: Document) {
     this.initializeStyleElement();
+    this.appliedCount = 0;
   }
 
   private initializeStyleElement(): void {
@@ -228,13 +230,67 @@ export class SmoothDOMOrchestrator {
 
   /**
    * Force immediate flush of all queued updates
+   * @returns The number of updates that were actually applied
    */
-  public async forceFlush(): Promise<void> {
+  public async forceFlush(): Promise<number> {
     if (this.batchTimeout) {
       clearTimeout(this.batchTimeout);
       this.batchTimeout = null;
     }
     await this.flushQueue();
+    return this.appliedCount;
+  }
+
+  /**
+   * Get the count of successfully applied updates
+   */
+  public getAppliedCount(): number {
+    return this.appliedCount;
+  }
+
+  /**
+   * Resolve selector to element, handling special cases like 'body', 'html', '#id', '.class'
+   */
+  private resolveElement(selector: string): HTMLElement | null {
+    // Handle special selectors that AI commonly uses
+    const cleanSelector = selector.replace(/^#/, '').trim();
+    
+    // Special case: body or html selectors
+    if (cleanSelector === 'body' || cleanSelector.startsWith('body ')) {
+      return this.doc.body;
+    }
+    if (cleanSelector === 'html' || cleanSelector === 'document') {
+      return this.doc.documentElement;
+    }
+    
+    // Try direct selector first
+    try {
+      const element = this.doc.querySelector(selector) as HTMLElement;
+      if (element) return element;
+    } catch { /* Invalid selector, try alternatives */ }
+    
+    // Try as ID without #
+    try {
+      const byId = this.doc.getElementById(cleanSelector);
+      if (byId) return byId;
+    } catch { /* Not found */ }
+    
+    // Try common variations
+    const variations = [
+      `#${cleanSelector}`,
+      `.${cleanSelector}`,
+      `[data-id="${cleanSelector}"]`,
+      `[id="${cleanSelector}"]`,
+    ];
+    
+    for (const variant of variations) {
+      try {
+        const element = this.doc.querySelector(variant) as HTMLElement;
+        if (element) return element;
+      } catch { /* Invalid selector */ }
+    }
+    
+    return null;
   }
 
   /**
@@ -256,19 +312,19 @@ export class SmoothDOMOrchestrator {
 
       // Apply CSS first (instant visual feedback)
       if (cssUpdates.length > 0) {
-        this.applyCSSUpdates(cssUpdates);
+        this.appliedCount += this.applyCSSUpdates(cssUpdates);
       }
 
       // Small delay after CSS so user sees visual feedback
       if (htmlUpdates.length > 0) {
         await this.delay(16); // One frame
-        await this.applyHTMLUpdates(htmlUpdates);
+        this.appliedCount += await this.applyHTMLUpdates(htmlUpdates);
       }
 
       // JS last
       if (jsUpdates.length > 0) {
         await this.delay(16);
-        this.applyJSUpdates(jsUpdates);
+        this.appliedCount += this.applyJSUpdates(jsUpdates);
       }
 
     } catch (error) {
@@ -282,8 +338,8 @@ export class SmoothDOMOrchestrator {
    * Apply CSS updates with NO REFLOW
    * Single write to style element
    */
-  private applyCSSUpdates(diffs: DiffBlock[]): void {
-    if (!this.styleElement) return;
+  private applyCSSUpdates(diffs: DiffBlock[]): number {
+    if (!this.styleElement) return 0;
 
     // Combine all CSS changes into single update (one reflow)
     const cssContent = diffs.map(d => d.content).join('\n');
@@ -293,17 +349,22 @@ export class SmoothDOMOrchestrator {
     this.styleElement.textContent = existingCSS + '\n' + cssContent;
 
     console.log(`[SmoothDOM] Applied ${diffs.length} CSS update(s)`);
+    return diffs.length; // CSS always applies
   }
 
   /**
    * Apply HTML updates with smart diffing
    * Only updates changed DOM elements
+   * @returns Number of successfully applied updates
    */
-  private async applyHTMLUpdates(diffs: DiffBlock[]): Promise<void> {
+  private async applyHTMLUpdates(diffs: DiffBlock[]): Promise<number> {
+    let applied = 0;
+    
     for (const diff of diffs) {
       if (!diff.path) continue;
 
-      const element = this.doc.querySelector(diff.path) as HTMLElement | null;
+      // Use improved element resolution
+      const element = this.resolveElement(diff.path);
       
       switch (diff.operation) {
         case 'modify':
@@ -315,20 +376,26 @@ export class SmoothDOMOrchestrator {
             await this.delay(0);
             element.style.opacity = '1';
             console.log(`[SmoothDOM] Modified ${diff.path}`);
+            applied++;
           } else {
-            // Element doesn't exist - try to inject
-            this.injectHTML(diff.path, diff.content);
+            // Element doesn't exist - try to inject into body
+            if (this.injectHTML(diff.path, diff.content)) {
+              applied++;
+            }
           }
           break;
 
         case 'add':
-          this.injectHTML(diff.path, diff.content);
+          if (this.injectHTML(diff.path, diff.content)) {
+            applied++;
+          }
           break;
 
         case 'append':
           if (element) {
             element.innerHTML += diff.content;
             console.log(`[SmoothDOM] Appended to ${diff.path}`);
+            applied++;
           }
           break;
 
@@ -338,49 +405,63 @@ export class SmoothDOMOrchestrator {
             await this.delay(300);
             element.remove();
             console.log(`[SmoothDOM] Removed ${diff.path}`);
+            applied++;
           }
           break;
       }
     }
+    
+    return applied;
   }
 
   /**
    * Inject HTML into the document
+   * @returns true if injection succeeded
    */
-  private injectHTML(selector: string, content: string): void {
-    // Try to find parent element
-    const parentSelector = selector.split(' ').slice(0, -1).join(' ') || 'body';
-    const parent = this.doc.querySelector(parentSelector) || this.doc.body;
+  private injectHTML(selector: string, content: string): boolean {
+    try {
+      // Try to find parent element
+      const parentSelector = selector.split(' ').slice(0, -1).join(' ') || 'body';
+      const parent = this.resolveElement(parentSelector) || this.doc.body;
 
-    const temp = this.doc.createElement('div');
-    temp.innerHTML = content;
+      const temp = this.doc.createElement('div');
+      temp.innerHTML = content;
 
-    while (temp.firstChild) {
-      parent.appendChild(temp.firstChild);
+      while (temp.firstChild) {
+        parent.appendChild(temp.firstChild);
+      }
+
+      console.log(`[SmoothDOM] Injected HTML near ${selector}`);
+      return true;
+    } catch (error) {
+      console.warn(`[SmoothDOM] Failed to inject HTML for ${selector}:`, error);
+      return false;
     }
-
-    console.log(`[SmoothDOM] Injected HTML near ${selector}`);
   }
 
   /**
    * Apply JavaScript changes safely
    * Hot-swap functions without page reload
+   * @returns Number of successfully applied JS updates
    */
-  private applyJSUpdates(diffs: DiffBlock[]): void {
+  private applyJSUpdates(diffs: DiffBlock[]): number {
     const iframeWindow = this.doc.defaultView;
-    if (!iframeWindow) return;
+    if (!iframeWindow) return 0;
 
+    let applied = 0;
     for (const diff of diffs) {
       try {
         // Evaluate new function in iframe context
         const fn = new Function(diff.content);
         fn.call(iframeWindow);
         console.log(`[SmoothDOM] Applied JS: ${diff.path || 'anonymous'}`);
+        applied++;
       } catch (error) {
         console.error(`[SmoothDOM] Failed to apply JS (${diff.path}):`, error);
         // Silently fail - don't break the entire page
       }
     }
+    return applied;
   }
 
   private delay(ms: number): Promise<void> {

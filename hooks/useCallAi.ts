@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { MODELS } from "@/lib/providers";
 import { Page } from "@/types";
@@ -30,6 +30,7 @@ export const useCallAi = ({
   onScrollToBottom,
   setPages,
   setCurrentPage,
+  currentPage,
   pages,
   isAiWorking,
   setisAiWorking,
@@ -37,6 +38,19 @@ export const useCallAi = ({
 }: UseCallAiProps) => {
   const audio = useRef<HTMLAudioElement | null>(null);
   const [controller, setController] = useState<AbortController | null>(null);
+  
+  // Ref to always have latest pages - fixes stale closure issues in async callbacks
+  const pagesRef = useRef<Page[]>(pages);
+  const currentPageRef = useRef<Page>(currentPage);
+  
+  // Keep refs in sync with state
+  useEffect(() => {
+    pagesRef.current = pages;
+  }, [pages]);
+  
+  useEffect(() => {
+    currentPageRef.current = currentPage;
+  }, [currentPage]);
 
   const callAiNewProject = async (prompt: string, model: string | undefined, provider: string | undefined, redesignMarkdown?: string, handleThink?: (think: string) => void, onFinishThink?: () => void, projectType: string = "html") => {
     if (isAiWorking) return;
@@ -396,12 +410,20 @@ export const useCallAi = ({
     try {
       onNewPrompt(prompt);
 
-      // Import smooth streaming utilities dynamically to avoid SSR issues
+      // Import JSON delta streaming utilities (preferred) with fallback to legacy
+      const { JSONDeltaParser, DeltaApplier } = await import("@/lib/json-delta-streaming");
+      // Also import legacy parser for fallback
       const { StreamingDiffParser, SmoothDOMOrchestrator } = await import("@/lib/smooth-streaming");
 
       const iframeDoc = iframe.contentDocument;
-      const parser = new StreamingDiffParser();
-      const orchestrator = new SmoothDOMOrchestrator(iframeDoc);
+      
+      // Use both parsers - JSON delta as primary, legacy as fallback
+      const jsonParser = new JSONDeltaParser();
+      const deltaApplier = new DeltaApplier(iframeDoc);
+      
+      // Legacy fallback
+      const legacyParser = new StreamingDiffParser();
+      const legacyOrchestrator = new SmoothDOMOrchestrator(iframeDoc);
 
       // Report initial state
       onStreamProgress?.({
@@ -453,14 +475,13 @@ export const useCallAi = ({
       const reader = request.body.getReader();
       const decoder = new TextDecoder("utf-8");
       let totalChars = 0;
-      let totalDiffs = 0;
 
       while (true) {
         const { done, value } = await reader.read();
 
         if (done) {
-          // Flush any remaining updates
-          await orchestrator.forceFlush();
+          // Flush any remaining legacy updates
+          await legacyOrchestrator.forceFlush();
 
           // Report completion
           onStreamProgress?.({
@@ -476,13 +497,20 @@ export const useCallAi = ({
         const chunk = decoder.decode(value, { stream: true });
         totalChars += chunk.length;
 
-        // Parse deltas in real-time
-        const diffs = parser.parseStreamChunk(chunk);
-
-        // Apply each diff immediately
-        for (const diff of diffs) {
-          orchestrator.queueUpdate(diff);
-          totalDiffs++;
+        // Strategy 1: Try JSON delta format (preferred, more reliable)
+        const jsonDeltas = jsonParser.parseStreamChunk(chunk);
+        
+        for (const delta of jsonDeltas) {
+          // Apply delta directly to DOM
+          deltaApplier.applyDelta(delta);
+        }
+        
+        // Strategy 2: If no JSON deltas, try legacy HTML comment markers
+        if (jsonDeltas.length === 0) {
+          const legacyDiffs = legacyParser.parseStreamChunk(chunk);
+          for (const diff of legacyDiffs) {
+            legacyOrchestrator.queueUpdate(diff);
+          }
         }
 
         // Report progress
@@ -494,14 +522,120 @@ export const useCallAi = ({
         });
       }
 
-      // Success!
-      toast.success(`✨ Applied ${totalDiffs} updates smoothly`);
+      // Get the raw buffer and actual applied count for determining success
+      const rawBuffer = jsonParser.getBuffer() || legacyParser.getBuffer();
+      const appliedDiffs = deltaApplier.getAppliedCount() + legacyOrchestrator.getAppliedCount();
+      
+      // Use refs to get latest state (avoids stale closure bugs in async code)
+      const latestPages = pagesRef.current;
+      const currentPagePath = currentPageRef.current.path;
+      
+      // Determine which page to update - use exact match on currentPage.path
+      const targetPageIndex = latestPages.findIndex(p => p.path === currentPagePath);
+      
+      if (targetPageIndex === -1) {
+        console.error('[SmoothStreaming] Could not find current page:', currentPagePath);
+        toast.error('Could not find page to update');
+        setisAiWorking(false);
+        return { error: 'page_not_found', message: `Page ${currentPagePath} not found` };
+      }
+
+      // Check if any diffs were actually applied - if not, use fallback mechanism
+      if (appliedDiffs === 0 && rawBuffer.length > 0) {
+        console.log('[SmoothStreaming] No diffs applied, using fallback extraction...');
+        
+        // Try using the existing formatPages helper (uses START_TITLE format)
+        const parsedPages = formatPagesFromBuffer(rawBuffer);
+        
+        if (parsedPages && parsedPages.length > 0) {
+          console.log('[SmoothStreaming] Fallback: Found pages via formatPages');
+          
+          // Apply to iframe
+          const newHtml = parsedPages[0].html;
+          iframeDoc.open();
+          iframeDoc.write(newHtml);
+          iframeDoc.close();
+          
+          // Update the correct page in state
+          const updatedPages = [...latestPages];
+          updatedPages[targetPageIndex] = {
+            ...updatedPages[targetPageIndex],
+            html: newHtml,
+          };
+          
+          setPages(updatedPages);
+          onSuccess(updatedPages, prompt);
+          
+          toast.success('✨ Changes applied successfully');
+          setisAiWorking(false);
+          if (audio.current) audio.current.play();
+          
+          return { success: true, totalDiffs: 1 };
+        }
+        
+        // Try direct HTML extraction as last resort
+        const htmlDocMatch = rawBuffer.match(/```html\s*(<!DOCTYPE html>[\s\S]*?<\/html>)\s*```/i) ||
+                            rawBuffer.match(/(<!DOCTYPE html>[\s\S]*?<\/html>)/i);
+        
+        if (htmlDocMatch && htmlDocMatch[1] && htmlDocMatch[1].length > 100) {
+          const extractedHtml = htmlDocMatch[1].trim();
+          console.log('[SmoothStreaming] Fallback: Extracted HTML directly');
+          
+          // Apply to iframe
+          iframeDoc.open();
+          iframeDoc.write(extractedHtml);
+          iframeDoc.close();
+          
+          // Update the correct page
+          const updatedPages = [...latestPages];
+          updatedPages[targetPageIndex] = {
+            ...updatedPages[targetPageIndex],
+            html: extractedHtml,
+          };
+          
+          setPages(updatedPages);
+          onSuccess(updatedPages, prompt);
+          
+          toast.success('✨ Changes applied successfully');
+          setisAiWorking(false);
+          if (audio.current) audio.current.play();
+          
+          return { success: true, totalDiffs: 1 };
+        }
+        
+        // Nothing worked - show error
+        console.error('[SmoothStreaming] Could not extract any HTML from response');
+        toast.error('AI response was not in expected format. Try rephrasing your request.');
+        setisAiWorking(false);
+        return { error: 'parse_error', message: 'Could not extract code from AI response' };
+      }
+
+      // SUCCESS! Sync the DOM changes back to the pages state
+      // Extract the updated HTML from the iframe
+      const updatedHtml = iframeDoc.documentElement.outerHTML;
+      const fullHtml = `<!DOCTYPE html>\n${updatedHtml}`;
+      
+      // Update the correct page using deterministic targeting
+      const updatedPages = [...latestPages];
+      updatedPages[targetPageIndex] = {
+        ...updatedPages[targetPageIndex],
+        html: fullHtml,
+      };
+      
+      // Use functional update to ensure we're not overwriting concurrent changes
+      setPages(updatedPages);
+      
+      // Call onSuccess to properly update editor and history
+      onSuccess(updatedPages, prompt);
+      
+      console.log(`[SmoothStreaming] Synced ${appliedDiffs} changes to ${currentPagePath}`);
+      
+      toast.success(`✨ Applied ${appliedDiffs} updates smoothly`);
       setisAiWorking(false);
 
       if (audio.current) audio.current.play();
 
-      // Return success (pages stay the same, updates applied directly to DOM)
-      return { success: true, totalDiffs };
+      return { success: true, totalDiffs: appliedDiffs };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
@@ -524,6 +658,45 @@ export const useCallAi = ({
       setController(null);
       setisAiWorking(false);
     }
+  };
+
+  // Helper function to extract pages from buffer without side effects (for fallback)
+  const formatPagesFromBuffer = (content: string): Page[] => {
+    const result: Page[] = [];
+    if (!content.match(/<<<<<<< START_TITLE (.*?) >>>>>>> END_TITLE/)) {
+      // Try NEW_PAGE format as well
+      const newPageRegex = /<<<<<<< NEW_PAGE_START\s+([^\s]+)\s+>>>>>>> NEW_PAGE_END/g;
+      if (!content.match(newPageRegex)) {
+        return result;
+      }
+    }
+
+    const cleanedContent = content.replace(
+      /[\s\S]*?<<<<<<< START_TITLE (.*?) >>>>>>> END_TITLE/,
+      "<<<<<<< START_TITLE $1 >>>>>>> END_TITLE"
+    );
+    const htmlChunks = cleanedContent.split(
+      /<<<<<<< START_TITLE (.*?) >>>>>>> END_TITLE/
+    );
+    const processedChunks = new Set<number>();
+
+    htmlChunks.forEach((chunk, index) => {
+      if (processedChunks.has(index) || !chunk?.trim()) {
+        return;
+      }
+      const htmlContent = extractHtmlContent(htmlChunks[index + 1]);
+
+      if (htmlContent) {
+        result.push({
+          path: chunk.trim(),
+          html: htmlContent,
+        });
+        processedChunks.add(index);
+        processedChunks.add(index + 1);
+      }
+    });
+
+    return result;
   };
 
   const formatPages = (content: string) => {
