@@ -108,7 +108,7 @@ ${project.description || "Generated with Groq Coder"}
 
 ## Generated with [Groq Coder](https://groq-coder.vercel.app)
 
-Free AI Code Generation Platform powered by Groq LPU.
+Free AI Code Generation Platform.
 
 ## Files Included
 
@@ -131,7 +131,7 @@ ${project.prompts?.map((p: string, i: number) => `${i + 1}. ${p}`).join("\n") ||
 
 ## Powered By
 
-- ⚡ Groq LPU for ultra-fast inference
+- ⚡ Ultra-fast AI inference
 - 🤖 ${project.model || "Llama 3.3 70B"}
 - 🆓 100% free and open source
 

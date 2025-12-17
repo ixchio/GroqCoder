@@ -25,7 +25,7 @@ const tourSteps: TourStep[] = [
   },
   {
     title: "Lightning Fast Generation",
-    description: "Powered by Groq LPU™ and 20+ free AI models. Your code generates in seconds, not minutes. No API keys needed - just start building!",
+    description: "Powered by 20+ free AI models. Your code generates in seconds, not minutes. No API keys needed - just start building!",
     icon: <Zap className="w-6 h-6 text-yellow-400" />,
   },
   {

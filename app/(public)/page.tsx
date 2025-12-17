@@ -7,16 +7,37 @@ import { ArrowRight, Bot, Sparkles, Network, Database, Server, Terminal } from "
 import { useEffect, useState, useRef } from "react";
 import { Cursor } from "@/components/ui/cursor";
 import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
+
+// Dynamic import for 3D Scene (SSR disabled)
+const HeroScene = dynamic(
+  () => import("@/components/landing/HeroScene").then(mod => mod.HeroScene),
+  { ssr: false }
+);
+const HeroSceneFallback = dynamic(
+  () => import("@/components/landing/HeroScene").then(mod => mod.HeroSceneFallback),
+  { ssr: false }
+);
 
 export default function Home() {
   const { data: session } = useSession();
 
   const heroRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
   
   // Parallax Tilt
   const [rotateX, setRotateX] = useState(0);
   const [rotateY, setRotateY] = useState(0);
+
+  // Detect mobile/low-power devices
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768 || window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!heroRef.current) return;
@@ -36,86 +57,12 @@ export default function Home() {
      setRotateY(0);
   };
 
-  useEffect(() => {
-    // Starfield Animation
-    if (canvasRef.current) {
-       const canvas = canvasRef.current;
-       const ctx = canvas.getContext('2d');
-       if (!ctx) return;
-       
-       const stars: {x: number, y: number, z: number, px: number, py: number}[] = [];
-       const numStars = 800;
-       
-       canvas.width = window.innerWidth;
-       canvas.height = window.innerHeight;
-       
-       const centerX = canvas.width / 2;
-       const centerY = canvas.height / 2;
-       
-       for(let i=0; i<numStars; i++) {
-          stars.push({
-             x: (Math.random() - 0.5) * canvas.width,
-             y: (Math.random() - 0.5) * canvas.height,
-             z: Math.random() * canvas.width,
-             px: 0, 
-             py: 0
-          });
-       }
-       
-       const animateStars = () => {
-          ctx.fillStyle = "black";
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          
-          for(let i=0; i<numStars; i++) {
-             const star = stars[i];
-             star.z -= 2; // Warp speed
-             
-             if(star.z <= 0) {
-                star.x = (Math.random() - 0.5) * canvas.width;
-                star.y = (Math.random() - 0.5) * canvas.height;
-                star.z = canvas.width;
-                star.px = 0;
-                star.py = 0;
-             }
-             
-             const x = (star.x / star.z) * canvas.width + centerX;
-             const y = (star.y / star.z) * canvas.height + centerY;
-             
-             if (x > 0 && x < canvas.width && y > 0 && y < canvas.height && star.px !== 0) {
-                 ctx.beginPath();
-                 ctx.lineWidth = (1 - star.z / canvas.width) * 2;
-                 ctx.strokeStyle = `rgba(255, 255, 255, ${1 - star.z/canvas.width})`;
-                 ctx.moveTo(star.px, star.py);
-                 ctx.lineTo(x, y);
-                 ctx.stroke();
-             }
-             
-             star.px = x;
-             star.py = y;
-          }
-          requestAnimationFrame(animateStars);
-       };
-       animateStars();
-       
-       const handleResize = () => {
-          canvas.width = window.innerWidth;
-          canvas.height = window.innerHeight;
-       };
-       window.addEventListener('resize', handleResize);
-       return () => window.removeEventListener('resize', handleResize);
-    }
-
-  }, []);
-
   return (
     <div className="text-white overflow-hidden bg-[#030303] min-h-screen selection:bg-purple-500/30">
       <Cursor />
       
-      {/* Animated Starfield Background */}
-      <canvas 
-        ref={canvasRef} 
-        className="fixed inset-0 z-0 opacity-40 pointer-events-none"
-      />
+      {/* 3D Hero Background */}
+      {isMobile ? <HeroSceneFallback /> : <HeroScene />}
 
       {/* Navbar */}
       <motion.nav 
@@ -165,7 +112,7 @@ export default function Home() {
                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
              </span>
-             <span className="text-sm text-white/70 font-mono">Groq LPU™ + KatCoder + DeepSeek R1</span>
+              <span className="text-sm text-white/70 font-mono">AI-Powered Code Generation</span>
            </motion.div>
 
            {/* Main Headline */}
@@ -254,7 +201,7 @@ export default function Home() {
                 {/* Content */}
                 <div className="relative h-full pt-12 px-6 pb-6 flex">
                     <div className="flex-1 font-mono text-sm text-left opacity-90 leading-relaxed overflow-hidden">
-                       <div className="typewriter-text text-green-400 mb-2">{"> initializing groq_lpu_inference_engine..."}</div>
+                       <div className="typewriter-text text-green-400 mb-2">{"&gt; initializing groqcoder_inference_engine..."}</div>
                        <div className="typewriter-text text-blue-400 mb-2 delay-100">{"> loading model: deepseek-r1-distill-llama-70b..."}</div>
                        <motion.div 
                           className="mt-8 p-4 border border-white/10 rounded-lg bg-white/5 font-sans"
@@ -423,7 +370,7 @@ export default function Home() {
             >
                {[...Array(2)].map((_, i) => (
                   <div key={i} className="flex gap-16 shrink-0">
-                     {["KatCoder", "DeepSeek R1", "GLM-4", "Llama 3", "Mixtral 8x7B", "Gemma 2"].map((model) => (
+                     {["Llama 3.3", "DeepSeek R1", "Qwen 3", "Gemini 2.0", "Devstral", "Gemma 3"].map((model) => (
                         <div key={model} className="flex items-center gap-2 opacity-50 hover:opacity-100 transition-opacity">
                            <Bot className="w-6 h-6 text-white" />
                            <span className="font-bold text-2xl text-white tracking-tighter">{model}</span>

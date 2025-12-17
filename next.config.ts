@@ -2,6 +2,26 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  
+  // Turbopack configuration (used with next dev --turbopack)
+  turbopack: {
+    rules: {
+      '*.ogg': {
+        loaders: ['file-loader'],
+        as: '*.js',
+      },
+      '*.mp3': {
+        loaders: ['file-loader'],
+        as: '*.js',
+      },
+      '*.wav': {
+        loaders: ['file-loader'],
+        as: '*.js',
+      },
+    },
+  },
+  
+  // Webpack configuration (used with next build)
   webpack(config, options) {
     const { isServer } = options;
     config.module.rules.push({
@@ -34,3 +54,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+

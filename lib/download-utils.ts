@@ -35,7 +35,7 @@ Open \`index.html\` in your browser to view the project.
 
 ## Powered By
 
-- ⚡ Groq LPU for ultra-fast inference
+- ⚡ Ultra-fast AI inference
 - 🤖 Llama, Mixtral, Gemma, and more AI models
 - 🆓 100% free and open source
 

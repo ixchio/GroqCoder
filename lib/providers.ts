@@ -33,7 +33,7 @@ export const FREE_PROVIDERS: Record<string, Provider> = {
     name: "Groq",
     baseUrl: "https://api.groq.com/openai/v1",
     requiresUserKey: false,
-    description: "Lightning fast LPU inference - ultra-low latency",
+    description: "Lightning fast inference - ultra-low latency",
     icon: "⚡",
   },
   cerebras: {
@@ -76,7 +76,7 @@ export const FREE_MODELS: AIModel[] = [
     name: "Llama 3.3 70B (Groq)",
     provider: "groq",
     contextLength: 128000,
-    description: "Meta's Llama 3.3 on Groq LPU - lightning fast inference",
+    description: "Meta's Llama 3.3 on Groq - lightning fast inference",
     isNew: true,
   },
 
@@ -281,7 +281,7 @@ export function isProviderFree(providerId: string): boolean {
   return providerId in FREE_PROVIDERS;
 }
 
-// Default model selection - Groq LPU for lightning fast inference
+// Default model selection - Groq for lightning fast inference
 export const DEFAULT_MODEL = "llama-3.3-70b-versatile";
 export const DEFAULT_PROVIDER = "groq";
 
