@@ -117,7 +117,6 @@ export function maskKey(key: string): string {
 
 /**
  * Validate API key format for known providers
- * Note: All providers are now free tier, no user API keys needed
  */
 export function validateApiKeyFormat(provider: string, key: string): { valid: boolean; error?: string } {
   if (!key || key.trim() === "") {
@@ -133,6 +132,23 @@ export function validateApiKeyFormat(provider: string, key: string): { valid: bo
   
   if (trimmed.length > 256) {
     return { valid: false, error: "API key is too long" };
+  }
+  
+  // Provider-specific validation
+  switch (provider.toLowerCase()) {
+    case "openai":
+      if (!trimmed.startsWith("sk-")) {
+        return { valid: false, error: "OpenAI keys should start with 'sk-'" };
+      }
+      if (trimmed.length < 20) {
+        return { valid: false, error: "OpenAI key seems too short" };
+      }
+      break;
+    case "deepseek":
+      if (!trimmed.startsWith("sk-")) {
+        return { valid: false, error: "DeepSeek keys should start with 'sk-'" };
+      }
+      break;
   }
   
   return { valid: true };
