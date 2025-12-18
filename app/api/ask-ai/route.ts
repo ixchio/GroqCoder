@@ -21,7 +21,6 @@ import {
   DELTA_FOLLOW_UP_SYSTEM_PROMPT,
   NEW_PAGE_START,
   NEW_PAGE_END,
-  MAX_REQUESTS_PER_IP,
 } from "@/lib/prompts";
 import {
   REACT_SYSTEM_PROMPT,
@@ -35,9 +34,12 @@ import User from "@/models/User";
 import { getUpdatedLineRanges } from "@/lib/diff-utils";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Page, ProjectType, CodeFile } from "@/types";
-
-// Rate limiting for anonymous users
-const ipAddresses = new Map<string, number>();
+import {
+  checkApiRateLimit,
+  recordApiRequest,
+  createRateLimitIdentifier,
+  API_RATE_LIMITS,
+} from "@/lib/api-rate-limit";
 
 // Helper to decrypt API keys
 function decryptKey(encrypted: string): string {
@@ -192,8 +194,10 @@ export async function POST(request: NextRequest) {
   }
 
   if (!session?.user?.email && FREE_PROVIDERS[providerId]) {
-    ipAddresses.set(ip, (ipAddresses.get(ip) || 0) + 1);
-    if (ipAddresses.get(ip)! > MAX_REQUESTS_PER_IP) {
+    const identifier = createRateLimitIdentifier(ip);
+    const rateLimit = checkApiRateLimit(identifier, API_RATE_LIMITS.anonymous);
+    
+    if (!rateLimit.allowed) {
       return NextResponse.json(
         {
           ok: false,
@@ -203,6 +207,7 @@ export async function POST(request: NextRequest) {
         { status: 429 }
       );
     }
+    recordApiRequest(identifier);
   }
 
   try {
@@ -422,8 +427,10 @@ export async function PUT(request: NextRequest) {
   }
 
   if (!session?.user?.email && FREE_PROVIDERS[providerId]) {
-    ipAddresses.set(ip, (ipAddresses.get(ip) || 0) + 1);
-    if (ipAddresses.get(ip)! > MAX_REQUESTS_PER_IP) {
+    const identifier = createRateLimitIdentifier(ip);
+    const rateLimit = checkApiRateLimit(identifier, API_RATE_LIMITS.anonymous);
+    
+    if (!rateLimit.allowed) {
       return NextResponse.json(
         {
           ok: false,
@@ -433,6 +440,7 @@ export async function PUT(request: NextRequest) {
         { status: 429 }
       );
     }
+    recordApiRequest(identifier);
   }
 
   try {
