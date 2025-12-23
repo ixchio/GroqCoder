@@ -1,0 +1,56 @@
+# Labeler configuration for PR files
+# Format: label: [file patterns]
+
+# Core application
+'area/core':
+  - changed-files:
+      - any-glob-to-any-file: ['app/**/*', 'lib/**/*']
+
+# Frontend/UI changes
+'area/ui':
+  - changed-files:
+      - any-glob-to-any-file: ['components/**/*', 'app/**/*.tsx', '**/*.css']
+
+# API changes
+'area/api':
+  - changed-files:
+      - any-glob-to-any-file: ['app/api/**/*']
+
+# Documentation
+'documentation':
+  - changed-files:
+      - any-glob-to-any-file: ['*.md', 'docs/**/*', '.github/**/*.md']
+
+# Configuration
+'area/config':
+  - changed-files:
+      - any-glob-to-any-file:
+          - '*.json'
+          - '*.config.*'
+          - '.env*'
+          - 'tsconfig.json'
+
+# Tests
+'tests':
+  - changed-files:
+      - any-glob-to-any-file: ['**/*.test.*', '**/*.spec.*', 'e2e/**/*']
+
+# Dependencies
+'dependencies':
+  - changed-files:
+      - any-glob-to-any-file: ['package.json', 'package-lock.json']
+
+# Docker
+'docker':
+  - changed-files:
+      - any-glob-to-any-file: ['Dockerfile', 'docker-compose*.yml']
+
+# CI/CD
+'ci/cd':
+  - changed-files:
+      - any-glob-to-any-file: ['.github/**/*']
+
+# Types
+'types':
+  - changed-files:
+      - any-glob-to-any-file: ['types/**/*', '**/*.d.ts']

@@ -1,0 +1,67 @@
+name: 🏷️ Auto Labeler
+
+on:
+    issues:
+        types: [opened, edited]
+    pull_request:
+        types: [opened, edited, synchronize]
+    pull_request_target:
+        types: [opened, edited, synchronize]
+
+permissions:
+    contents: read
+    issues: write
+    pull-requests: write
+
+jobs:
+    label-issues:
+        name: 🏷️ Label Issues
+        runs-on: ubuntu-latest
+        if: github.event_name == 'issues'
+        steps:
+            - name: 📥 Checkout
+              uses: actions/checkout@v4
+
+            - name: 🏷️ Apply labels based on content
+              uses: github/issue-labeler@v3
+              with:
+                  repo-token: ${{ secrets.GITHUB_TOKEN }}
+                  configuration-path: .github/labeler-issues.yml
+                  enable-versioned-regex: 0
+
+    label-prs:
+        name: 🏷️ Label PRs
+        runs-on: ubuntu-latest
+        if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
+        steps:
+            - name: 📥 Checkout
+              uses: actions/checkout@v4
+
+            - name: 🏷️ Apply labels based on files changed
+              uses: actions/labeler@v5
+              with:
+                  repo-token: ${{ secrets.GITHUB_TOKEN }}
+                  configuration-path: .github/labeler.yml
+                  sync-labels: true
+
+    size-label:
+        name: 📏 Size Label
+        runs-on: ubuntu-latest
+        if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
+        steps:
+            - name: 📏 Apply size label
+              uses: codelytv/pr-size-labeler@v1
+              with:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  xs_label: "size/XS"
+                  xs_max_size: 10
+                  s_label: "size/S"
+                  s_max_size: 50
+                  m_label: "size/M"
+                  m_max_size: 200
+                  l_label: "size/L"
+                  l_max_size: 500
+                  xl_label: "size/XL"
+                  fail_if_xl: false
+                  message_if_xl: |
+                      ⚠️ This PR is quite large! Consider breaking it into smaller, more reviewable chunks.

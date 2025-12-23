@@ -1,0 +1,110 @@
+name: 🐛 Bug Report
+description: Report a bug or unexpected behavior
+title: "[Bug]: "
+labels: ["bug", "needs triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ⚡ Thanks for reporting a bug!
+        
+        Please fill out the following form to help us understand and fix the issue.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 🐛 Bug Description
+      description: A clear and concise description of what the bug is
+      placeholder: When I try to... it shows/does...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 📝 Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Enter '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: ✅ Expected Behavior
+      description: What you expected to happen
+      placeholder: It should...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: ❌ Actual Behavior
+      description: What actually happened
+      placeholder: Instead, it...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: 🌐 Browser
+      description: Which browser(s) are you experiencing this issue on?
+      multiple: true
+      options:
+        - Chrome
+        - Firefox
+        - Safari
+        - Edge
+        - Other
+    validations:
+      required: false
+
+  - type: dropdown
+    id: model
+    attributes:
+      label: 🤖 AI Model Used
+      description: Which AI model were you using?
+      options:
+        - Llama 3.3 70B (Groq)
+        - Qwen 2.5 Coder (Groq)
+        - DeepSeek R1 (OpenRouter)
+        - Gemma 3 (OpenRouter)
+        - Hugging Face Models
+        - Other
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 📋 Logs / Screenshots
+      description: Add any relevant logs, error messages, or screenshots
+      placeholder: Paste logs or drag and drop screenshots here...
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 💻 Environment
+      description: Please provide your environment details
+      value: |
+        - OS: [e.g., macOS 14, Windows 11, Ubuntu 22.04]
+        - Node.js version: [e.g., 20.10.0]
+        - npm version: [e.g., 10.2.3]
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: ✅ Checklist
+      options:
+        - label: I have searched existing issues for duplicates
+          required: true
+        - label: I have provided all the information needed to reproduce this bug
+          required: true

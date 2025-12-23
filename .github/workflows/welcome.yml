@@ -1,0 +1,75 @@
+name: 👋 Welcome
+
+on:
+    issues:
+        types: [opened]
+    pull_request_target:
+        types: [opened]
+    fork:
+
+permissions:
+    issues: write
+    pull-requests: write
+
+jobs:
+    welcome-issue:
+        name: 👋 Welcome New Issue
+        runs-on: ubuntu-latest
+        if: github.event_name == 'issues'
+        steps:
+            - name: 👋 Welcome first-time issue creator
+              uses: actions/first-interaction@v1
+              with:
+                  repo-token: ${{ secrets.GITHUB_TOKEN }}
+                  issue-message: |
+                      ## ⚡ Welcome to Groq Coder!
+
+                      Thanks for opening your first issue! 🎉 We're excited to have you here.
+
+                      **Here's what happens next:**
+                      - 👀 A maintainer will review your issue soon
+                      - 🏷️ It may be labeled for better organization
+                      - 💬 Feel free to add more details if needed
+
+                      **While you wait, you might want to:**
+                      - ⭐ Star the repo if you find it useful
+                      - 📖 Check out our [Contributing Guide](../CONTRIBUTING.md)
+                      - 🔗 Try the [Live Demo](https://groq-coder.vercel.app)
+
+                      Thanks for helping make Groq Coder better! 🚀
+
+    welcome-pr:
+        name: 👋 Welcome New PR
+        runs-on: ubuntu-latest
+        if: github.event_name == 'pull_request_target'
+        steps:
+            - name: 👋 Welcome first-time contributor
+              uses: actions/first-interaction@v1
+              with:
+                  repo-token: ${{ secrets.GITHUB_TOKEN }}
+                  pr-message: |
+                      ## ⚡ Thank you for your first PR!
+
+                      Welcome to the Groq Coder community! 🎉
+
+                      **PR Review Checklist:**
+                      - ✅ Tests pass
+                      - ✅ Code follows our style guidelines
+                      - ✅ Documentation updated (if needed)
+
+                      **What happens next:**
+                      - 🤖 CI will run automated checks
+                      - 👀 A maintainer will review your code
+                      - 💬 We may request changes or ask questions
+
+                      Thank you for contributing to open-source AI! 🚀
+
+    greet-fork:
+        name: 👋 Greet Fork
+        runs-on: ubuntu-latest
+        if: github.event_name == 'fork'
+        steps:
+            - name: 📝 Log fork
+              run: |
+                  echo "🍴 Repository forked by ${{ github.event.forkee.owner.login }}"
+                  echo "New fork: ${{ github.event.forkee.full_name }}"

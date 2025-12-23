@@ -1,0 +1,38 @@
+# Issue labeler configuration based on content
+# Format: label: [regex patterns]
+
+bug:
+  - '(bug|issue|problem|error|crash|broken|fix)'
+  - '(doesn.t work|not working|fails|failing)'
+
+enhancement:
+  - '(feature|enhancement|request|add|new|improve)'
+  - '(would be nice|should|could)'
+
+question:
+  - '(question|how to|what is|why|help|confused|unclear)'
+  - '(\?.*how|\?.*what|\?.*why)'
+
+documentation:
+  - '(documentation|docs|readme|typo|spelling|grammar)'
+  - '(clarify|explain|example)'
+
+performance:
+  - '(slow|performance|speed|optimize|memory|latency)'
+  - '(faster|quicker|efficient)'
+
+security:
+  - '(security|vulnerability|exploit|CVE|injection)'
+  - '(auth|authentication|authorization)'
+
+ui:
+  - '(ui|design|styling|css|layout|responsive)'
+  - '(button|component|visual|theme|dark mode)'
+
+api:
+  - '(api|endpoint|route|request|response)'
+  - '(groq|model|inference|stream)'
+
+p2p:
+  - '(p2p|peer|webrtc|collaboration|real.?time)'
+  - '(sync|connection|signaling)'

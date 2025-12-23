@@ -1,0 +1,88 @@
+name: ✨ Feature Request
+description: Suggest a new feature or enhancement
+title: "[Feature]: "
+labels: ["enhancement", "needs triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ⚡ Feature Request
+        
+        We love new ideas! Please describe what you'd like to see in Groq Coder.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 🤔 Problem Statement
+      description: Is your feature request related to a problem? Describe it
+      placeholder: I'm always frustrated when...
+    validations:
+      required: false
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: 💡 Proposed Solution
+      description: Describe the solution you'd like
+      placeholder: It would be great if...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 🔄 Alternatives Considered
+      description: Any alternative solutions or features you've considered?
+      placeholder: I also thought about...
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: 📍 Feature Area
+      description: Which area of the app does this relate to?
+      options:
+        - Code Generation (AI Models)
+        - Editor / Monaco
+        - Live Preview
+        - P2P Collaboration
+        - UI / Design
+        - Authentication
+        - API / Backend
+        - Performance
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: impact
+    attributes:
+      label: 📊 Impact
+      description: How impactful do you think this feature would be?
+      options:
+        - High - Would benefit most users
+        - Medium - Would benefit many users
+        - Low - Nice to have for some users
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: 📎 Additional Context
+      description: Add any other context, mockups, or screenshots
+      placeholder: Drag and drop images or add links...
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: 🤝 Contribution
+      options:
+        - label: I'm willing to help implement this feature
+          required: false
+        - label: I have searched existing issues to avoid duplicates
+          required: true

@@ -1,0 +1,161 @@
+# GitHub Labels Configuration
+# Apply using: gh label create "name" --description "desc" --color "hex"
+
+labels:
+  # Type labels
+  - name: "bug"
+    color: "d73a4a"
+    description: "Something isn't working"
+  
+  - name: "enhancement"
+    color: "a2eeef"
+    description: "New feature or request"
+  
+  - name: "documentation"
+    color: "0075ca"
+    description: "Improvements or additions to documentation"
+  
+  - name: "question"
+    color: "d876e3"
+    description: "Further information is requested"
+
+  # Priority labels
+  - name: "priority: critical"
+    color: "b60205"
+    description: "Critical priority - needs immediate attention"
+  
+  - name: "priority: high"
+    color: "d93f0b"
+    description: "High priority"
+  
+  - name: "priority: medium"
+    color: "fbca04"
+    description: "Medium priority"
+  
+  - name: "priority: low"
+    color: "0e8a16"
+    description: "Low priority"
+
+  # Status labels
+  - name: "needs triage"
+    color: "ededed"
+    description: "Needs to be triaged by maintainers"
+  
+  - name: "blocked"
+    color: "b60205"
+    description: "Blocked by something else"
+  
+  - name: "stale"
+    color: "fef2c0"
+    description: "No recent activity"
+  
+  - name: "wontfix"
+    color: "ffffff"
+    description: "This will not be worked on"
+  
+  - name: "duplicate"
+    color: "cfd3d7"
+    description: "This issue or pull request already exists"
+
+  # Area labels
+  - name: "area/core"
+    color: "5319e7"
+    description: "Core application logic"
+  
+  - name: "area/ui"
+    color: "1d76db"
+    description: "User interface components"
+  
+  - name: "area/api"
+    color: "006b75"
+    description: "API and backend"
+  
+  - name: "area/p2p"
+    color: "00d4aa"
+    description: "Peer-to-peer and WebRTC"
+  
+  - name: "area/config"
+    color: "bfdadc"
+    description: "Configuration and setup"
+  
+  - name: "area/auth"
+    color: "c5def5"
+    description: "Authentication and authorization"
+
+  # Contribution labels
+  - name: "good first issue"
+    color: "7057ff"
+    description: "Good for newcomers"
+  
+  - name: "help wanted"
+    color: "008672"
+    description: "Extra attention is needed"
+  
+  - name: "hacktoberfest"
+    color: "ff6b00"
+    description: "Hacktoberfest eligible"
+
+  # Complexity labels
+  - name: "complex"
+    color: "e11d48"
+    description: "Complex implementation required"
+  
+  - name: "architecture"
+    color: "7c3aed"
+    description: "System architecture changes"
+
+  # Size labels (for PRs)
+  - name: "size/XS"
+    color: "00ff00"
+    description: "Extra small PR (< 10 lines)"
+  
+  - name: "size/S"
+    color: "77ff00"
+    description: "Small PR (10-50 lines)"
+  
+  - name: "size/M"
+    color: "ffff00"
+    description: "Medium PR (50-200 lines)"
+  
+  - name: "size/L"
+    color: "ff9900"
+    description: "Large PR (200-500 lines)"
+  
+  - name: "size/XL"
+    color: "ff0000"
+    description: "Extra large PR (> 500 lines)"
+
+  # Release labels
+  - name: "breaking change"
+    color: "b60205"
+    description: "This change breaks backward compatibility"
+  
+  - name: "security"
+    color: "ee0701"
+    description: "Security related"
+
+  # CI/Testing labels
+  - name: "ci/cd"
+    color: "0366d6"
+    description: "CI/CD and automation"
+  
+  - name: "tests"
+    color: "bfe5bf"
+    description: "Test improvements"
+  
+  - name: "dependencies"
+    color: "0366d6"
+    description: "Dependency updates"
+
+  # Feature specific
+  - name: "ai/models"
+    color: "ff6b00"
+    description: "AI model integration"
+  
+  - name: "ai/streaming"
+    color: "ff9500"
+    description: "AI response streaming"
+  
+  - name: "performance"
+    color: "ffc107"
+    description: "Performance improvements"
