@@ -1,4 +1,4 @@
-name: 🧹 Stale Issues & PRs
+name: Stale Issues and PRs
 
 on:
     schedule:
@@ -11,23 +11,23 @@ permissions:
 
 jobs:
     stale:
-        name: 🧹 Mark Stale
+        name: Mark Stale
         runs-on: ubuntu-latest
         steps:
-            - name: 🧹 Mark stale issues and PRs
+            - name: Mark stale issues and PRs
               uses: actions/stale@v9
               with:
                   repo-token: ${{ secrets.GITHUB_TOKEN }}
 
                   # Issues configuration
                   stale-issue-message: |
-                      👋 Hey there! This issue has been automatically marked as stale because it hasn't had recent activity.
+                      This issue has been automatically marked as stale because it hasn't had recent activity.
 
                       It will be closed in 7 days if no further activity occurs. If this issue is still relevant:
                       - Add a comment with any updates
                       - Remove the `stale` label
 
-                      Thank you for your contributions to Groq Coder! ⚡
+                      Thank you for your contributions to Groq Coder.
                   stale-issue-label: "stale"
                   days-before-issue-stale: 30
                   days-before-issue-close: 7
@@ -35,14 +35,14 @@ jobs:
 
                   # PRs configuration
                   stale-pr-message: |
-                      👋 This pull request has been automatically marked as stale because it hasn't had recent activity.
+                      This pull request has been automatically marked as stale because it hasn't had recent activity.
 
                       It will be closed in 14 days if no further activity occurs. If you're still working on this:
                       - Push any updates
                       - Add a comment with your progress
                       - Remove the `stale` label
 
-                      Need help? Feel free to ask! ⚡
+                      Need help? Feel free to ask.
                   stale-pr-label: "stale"
                   days-before-pr-stale: 45
                   days-before-pr-close: 14

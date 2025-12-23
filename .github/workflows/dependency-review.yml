@@ -1,4 +1,4 @@
-name: 📦 Dependency Review
+name: Dependency Review
 
 on:
     pull_request:
@@ -10,13 +10,13 @@ permissions:
 
 jobs:
     dependency-review:
-        name: 🔍 Review Dependencies
+        name: Review Dependencies
         runs-on: ubuntu-latest
         steps:
-            - name: 📥 Checkout
+            - name: Checkout
               uses: actions/checkout@v4
 
-            - name: 📦 Dependency Review
+            - name: Dependency Review
               uses: actions/dependency-review-action@v4
               with:
                   fail-on-severity: high

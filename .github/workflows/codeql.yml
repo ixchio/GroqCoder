@@ -1,4 +1,4 @@
-name: 🔐 CodeQL Security Analysis
+name: CodeQL Security Analysis
 
 on:
     push:
@@ -10,7 +10,7 @@ on:
 
 jobs:
     analyze:
-        name: 🔍 Analyze
+        name: Analyze
         runs-on: ubuntu-latest
         permissions:
             actions: read
@@ -23,19 +23,19 @@ jobs:
                 language: ["javascript-typescript"]
 
         steps:
-            - name: 📥 Checkout repository
+            - name: Checkout repository
               uses: actions/checkout@v4
 
-            - name: 🔧 Initialize CodeQL
+            - name: Initialize CodeQL
               uses: github/codeql-action/init@v3
               with:
                   languages: ${{ matrix.language }}
                   queries: security-extended
 
-            - name: 🔨 Autobuild
+            - name: Autobuild
               uses: github/codeql-action/autobuild@v3
 
-            - name: 🔍 Perform CodeQL Analysis
+            - name: Perform CodeQL Analysis
               uses: github/codeql-action/analyze@v3
               with:
                   category: "/language:${{ matrix.language }}"

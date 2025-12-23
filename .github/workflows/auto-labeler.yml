@@ -1,4 +1,4 @@
-name: 🏷️ Auto Labeler
+name: Auto Labeler
 
 on:
     issues:
@@ -15,14 +15,14 @@ permissions:
 
 jobs:
     label-issues:
-        name: 🏷️ Label Issues
+        name: Label Issues
         runs-on: ubuntu-latest
         if: github.event_name == 'issues'
         steps:
-            - name: 📥 Checkout
+            - name: Checkout
               uses: actions/checkout@v4
 
-            - name: 🏷️ Apply labels based on content
+            - name: Apply labels based on content
               uses: github/issue-labeler@v3
               with:
                   repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -30,14 +30,14 @@ jobs:
                   enable-versioned-regex: 0
 
     label-prs:
-        name: 🏷️ Label PRs
+        name: Label PRs
         runs-on: ubuntu-latest
         if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
         steps:
-            - name: 📥 Checkout
+            - name: Checkout
               uses: actions/checkout@v4
 
-            - name: 🏷️ Apply labels based on files changed
+            - name: Apply labels based on files changed
               uses: actions/labeler@v5
               with:
                   repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -45,11 +45,11 @@ jobs:
                   sync-labels: true
 
     size-label:
-        name: 📏 Size Label
+        name: Size Label
         runs-on: ubuntu-latest
         if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
         steps:
-            - name: 📏 Apply size label
+            - name: Apply size label
               uses: codelytv/pr-size-labeler@v1
               with:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -64,4 +64,4 @@ jobs:
                   xl_label: "size/XL"
                   fail_if_xl: false
                   message_if_xl: |
-                      ⚠️ This PR is quite large! Consider breaking it into smaller, more reviewable chunks.
+                      This PR is quite large. Consider breaking it into smaller, more reviewable chunks.
