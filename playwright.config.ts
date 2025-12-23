@@ -20,7 +20,10 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   
   /* Reporter to use */
-  reporter: 'html',
+  reporter: process.env.CI ? 'github' : 'html',
+  
+  /* Global timeout for tests */
+  timeout: 60000,
   
   /* Shared settings for all the projects below */
   use: {
@@ -32,10 +35,18 @@ export default defineConfig({
     
     /* Take screenshot on failure */
     screenshot: 'only-on-failure',
+    
+    /* Increase action timeout for CI */
+    actionTimeout: 15000,
   },
 
-  /* Configure projects for major browsers */
-  projects: [
+  /* Configure projects for major browsers - only chromium in CI for speed */
+  projects: process.env.CI ? [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ] : [
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
@@ -57,9 +68,12 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npm run dev',
+    command: process.env.CI ? 'npm run start' : 'npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
+    timeout: 180 * 1000,
+    env: {
+      SKIP_ENV_VALIDATION: 'true',
+    },
   },
 });
