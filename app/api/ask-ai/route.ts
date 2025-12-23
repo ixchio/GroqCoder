@@ -40,15 +40,9 @@ import {
   createRateLimitIdentifier,
   API_RATE_LIMITS,
 } from "@/lib/api-rate-limit";
+import { decryptKey } from "@/lib/api-keys";
 
-// Helper to decrypt API keys
-function decryptKey(encrypted: string): string {
-  const secret = process.env.API_KEYS_SECRET || process.env.NEXTAUTH_SECRET || "default-secret";
-  const buffer = Buffer.from(encrypted, "base64");
-  const secretBuffer = Buffer.from(secret);
-  const decrypted = buffer.map((byte, i) => byte ^ secretBuffer[i % secretBuffer.length]);
-  return Buffer.from(decrypted).toString("utf-8");
-}
+
 
 // Create AI client based on provider
 function createClient(
